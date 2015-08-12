@@ -1,0 +1,36 @@
+{
+    "extension": 
+    {
+        "name": "MobileCore",
+        "version": "1.0.0",
+        "description": "Extesion for Mobile Ionic environnement",
+        "icon": "YOUR_EXTENSION_ICON.png",
+        "senders": [
+        ],
+        "actions": [
+            {
+                "name": "checkDependencies",
+                "title": "Check studio Ionic dependencies",
+                "trigger": [
+                    { "event": "onStudioStart" }
+                ]
+            },
+            {
+                "name": "solutionOpenedHandler",
+                "title": "handle solution open event",
+                "trigger": [
+                    { "event": "onSolutionOpened" }
+                ]
+            },
+            {
+                "name": "solutionClosedHandler",
+                "title": "handle solution close event",
+                "trigger": [
+                    { "event": "onSolutionClosed" }
+                ]
+            }
+
+        ],
+        "lifetime": "application_lifetime"
+    }
+}
