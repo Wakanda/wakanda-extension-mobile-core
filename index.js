@@ -80,6 +80,12 @@ actions.launchTest = function(message) {
         projectName = utils.getSelectedProjectName(),
         port;
 
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only project in your Wakanda Solution to launch Test.');
+        return;
+    }
+
     var opt = {
         'android-ios': {
             'cmd_opt': '--lab',
@@ -138,11 +144,19 @@ actions.launchTest = function(message) {
 actions.launchRun = function(message) {
 	"use strict";
 
+    var projectName = utils.getSelectedProjectPath();
+
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only project in your Wakanda Solution to launch Run.');
+        return;
+    }
+
     ['android', 'ios'].forEach(function(platform) {
         if(message.params[platform]) {
             var cmd = {
                 'cmd': 'ionic platform add ' + platform,
-                'path': utils.getSelectedProjectPath(),
+                'path': projectName,
                 'onterminated': function(msg) {
                     emulatePlatform(platform);
                 }

@@ -4,7 +4,7 @@
         "name": "MobileCore",
         "version": "1.0.0",
         "description": "Extesion for Mobile Ionic environnement",
-        "icon": "YOUR_EXTENSION_ICON.png",
+        "icon": "icon.png",
         "senders": [
         ],
         "actions": [
