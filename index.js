@@ -130,10 +130,17 @@ actions.launchTest = function(message) {
     cmd.cmd += ' --port ' + port;
 
     cmd.onmessage = function() {
+        var url = 'http://127.0.0.1:'+ port + '/' + opt[config.selected].prefix;
         if(! config.chromePreview) {
-            studio.extension.registerTabPage('http://127.0.0.1:' + port + '/' + opt[config.selected].prefix, opt[config.selected].icon || '', opt[config.selected].title);
-            studio.extension.openPageInTab('http://127.0.0.1:'+ port + '/' + opt[config.selected].prefix, opt[config.selected].title, false);
-        }       
+            if(config.selected === 'android-ios') {
+                studio.extension.registerTabPage('android-ios.html', opt[config.selected].icon || '', opt[config.selected].title);
+                studio.extension.openPageInTab('android-ios.html', opt[config.selected].title, false, false, false, '', 'url=' + url);
+                    
+            } else {
+                studio.extension.registerTabPage('http://127.0.0.1:' + port + '/' + opt[config.selected].prefix, opt[config.selected].icon || '', opt[config.selected].title);
+                studio.extension.openPageInTab('http://127.0.0.1:'+ port + '/' + opt[config.selected].prefix, opt[config.selected].title, false);
+            }
+        }   
     };
 
     utils.executeAsyncCmd(cmd);

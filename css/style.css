@@ -1,0 +1,21 @@
+iframe {
+    -webkit-transform: translate3d(0, 0, 0);
+    margin: 0;
+
+}
+.android-ios {
+    width: 100%;
+    height: 100%;
+}
+
+#ionic-iframe {
+    width: 100%;
+    height: 100%;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
