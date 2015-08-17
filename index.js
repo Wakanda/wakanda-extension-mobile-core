@@ -88,7 +88,7 @@ actions.checkDependencies = function() {
 
                 utils.printConsole({
                     message: check.title + ': {%span class="orange"%}Not found{%/span%}',
-                    type: 'LOG'
+                    type: 'WARNING'
                 });
 
             },
