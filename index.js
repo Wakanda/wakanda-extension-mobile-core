@@ -27,19 +27,13 @@ actions.checkDependencies = function() {
     [{ 
         cmd: 'node -v',
         title: 'Node'
-     }, {
+    }, {
         cmd: 'ionic -v',
         title: 'Ionic'
-     }, {
+    }, {
         cmd: 'cordova -v',
         title: 'Cordova'
-     }, {
-        cmd: 'xcode-select -p',
-        title: 'xCode'
-     }, {
-        cmd: 'adb version',
-        title: 'Android SDK'
-     }].forEach(function(check) {
+    }].forEach(function(check) {
         var cmd = {
             cmd: check.cmd,
             onmessage: function(msg) {
@@ -57,8 +51,44 @@ actions.checkDependencies = function() {
                 _updateStatus();
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="red"%}Not found{%/span%}' + msg,
+                    message: check.title + ': {%span class="red"%}Not found{%/span%}',
                     type: 'ERROR'
+                });
+
+            },
+            options: {
+                consoleSilentMode: true
+            }
+        };
+        utils.executeAsyncCmd(cmd);
+    });
+
+    [{
+        cmd: 'xcode-select -p',
+        title: 'xCode'
+    }, {
+        cmd: 'adb version',
+        title: 'Android SDK'
+    }].forEach(function(check) {
+        var cmd = {
+            cmd: check.cmd,
+            onmessage: function(msg) {
+                status[check.title] = true;
+                _updateStatus();
+
+                utils.printConsole({
+                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg,
+                    type: 'LOG'
+                });
+
+            },
+            onerror: function(msg) {
+                status[check.title] = false;
+                _updateStatus();
+
+                utils.printConsole({
+                    message: check.title + ': {%span class="orange"%}Not found{%/span%}',
+                    type: 'LOG'
                 });
 
             },
