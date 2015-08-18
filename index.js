@@ -41,7 +41,7 @@ actions.checkDependencies = function() {
                 _updateStatus();
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg,
+                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.trim(),
                     type: 'LOG'
                 });
 
@@ -77,7 +77,7 @@ actions.checkDependencies = function() {
                 _updateStatus();
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg,
+                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.trim(),
                     type: 'LOG'
                 });
 
