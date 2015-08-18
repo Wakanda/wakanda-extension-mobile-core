@@ -91,6 +91,17 @@ actions.checkDependencies = function() {
                     type: 'WARNING'
                 });
 
+            },            
+            onterminated: function(msg) {
+                if (typeof status[check.title] == 'undefined') {
+                    status[check.title] = false;
+                    _updateStatus();
+
+                    utils.printConsole({
+                        message: check.title + ': {%span class="orange"%}Not found{%/span%}',
+                        type: 'WARNING'
+                    });
+                }
             },
             options: {
                 consoleSilentMode: true
