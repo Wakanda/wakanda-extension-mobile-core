@@ -53,10 +53,10 @@ actions.checkDependencies = function() {
     });
 
     [{
-        cmd: 'xcode-select -p',
+        cmd: 'xcodebuild -version',
         title: 'xCode'
     }, {
-        cmd: 'which adb',
+        cmd: 'program=$(which adb) && $program version',
         title: 'Android SDK'
     }].forEach(function(check) {
         var cmd = {
