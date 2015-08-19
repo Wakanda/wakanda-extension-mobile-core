@@ -2,17 +2,6 @@ var shell = require("../lib/shellWorker");
 var utils = require("../lib/utils");
 var Base64 = require("../lib/base64").Base64;
 
-function emulatePlatform(platform) {
-	"use strict";
-
-    platform = platform || 'android';
-    var cmd = {
-        'cmd': 'ionic emulate ' + platform + ' --livereload',
-        'path': utils.getSelectedProjectPath()
-    };
-    utils.executeAsyncCmd(cmd);
-}
-
 var actions = {};
 
 actions.checkDependencies = function() {
@@ -210,19 +199,48 @@ actions.launchRun = function(message) {
         return;
     }
 
+
     ['android', 'ios'].forEach(function(platform) {
         if(message.params[platform]) {
+            // add the platform
+            // and when terminated, launch emulate
             var cmd = {
                 'cmd': 'ionic platform add ' + platform,
                 'path': projectName,
                 'onterminated': function(msg) {
-                    emulatePlatform(platform);
+                    _emulatePlatform(platform);
                 }
             };
 
             utils.executeAsyncCmd(cmd);   
         }
     });
+
+    var _emulatePlatform = function(platform) {
+        "use strict";
+
+        platform = platform || 'android';
+        var ionicEmulators = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
+        ionicEmulators[platform] = ionicEmulators[platform] || {};
+
+        // kill ionic service last emulation
+        if(ionicEmulators[platform].pid) {
+            utils.killProcessPid(ionicEmulators[platform].pid);
+        }
+
+        var cmd = {
+            cmd: 'ionic emulate ' + platform + ' --livereload',
+            path: utils.getSelectedProjectPath(),
+            onmessage: function(msg) {
+                // save ionic process pid
+                var pid = worker._systemWorker.getInfos().pid;
+                ionicEmulators[platform].pid = pid;
+                studio.extension.storage.setItem('ionicEmulators', JSON.stringify(ionicEmulators));
+            }
+        };
+
+        var worker = utils.executeAsyncCmd(cmd);
+    }
 };
 
 actions.solutionOpenedHandler = function() {
@@ -251,3 +269,5 @@ exports.handleMessage = function handleMessage(message) {
 	}
 	actions[actionName](message);
 };
+
+
