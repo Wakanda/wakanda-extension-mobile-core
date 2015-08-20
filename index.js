@@ -15,13 +15,23 @@ actions.checkDependencies = function() {
 
     [{ 
         cmd: 'node -v',
-        title: 'Node'
+        title: 'Node',
+        mondatory: true
     }, {
         cmd: 'ionic -v',
         title: 'Ionic'
     }, {
         cmd: 'cordova -v',
-        title: 'Cordova'
+        title: 'Cordova',
+        mondatory: true
+    }, {
+        cmd: 'xcodebuild -version',
+        title: 'xCode',
+        mondatory: false
+    }, {
+        cmd: 'program=$(which adb) && $program version',
+        title: 'Android SDK',
+        mondatory: false
     }].forEach(function(check) {
         var cmd = {
             cmd: check.cmd,
@@ -40,54 +50,18 @@ actions.checkDependencies = function() {
                 _updateStatus();
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="red"%}Not found{%/span%}',
+                    message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
                     type: 'ERROR'
                 });
 
             },
-            options: {
-                consoleSilentMode: true
-            }
-        };
-        utils.executeAsyncCmd(cmd);
-    });
-
-    [{
-        cmd: 'xcodebuild -version',
-        title: 'xCode'
-    }, {
-        cmd: 'program=$(which adb) && $program version',
-        title: 'Android SDK'
-    }].forEach(function(check) {
-        var cmd = {
-            cmd: check.cmd,
-            onmessage: function(msg) {
-                status[check.title] = true;
-                _updateStatus();
-
-                utils.printConsole({
-                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.replace(/\r?\n|\r/, " "),
-                    type: 'LOG'
-                });
-
-            },
-            onerror: function(msg) {
-                status[check.title] = false;
-                _updateStatus();
-
-                utils.printConsole({
-                    message: check.title + ': {%span class="orange"%}Not found{%/span%}',
-                    type: 'WARNING'
-                });
-
-            },            
             onterminated: function(msg) {
                 if (typeof status[check.title] == 'undefined') {
                     status[check.title] = false;
                     _updateStatus();
 
                     utils.printConsole({
-                        message: check.title + ': {%span class="orange"%}Not found{%/span%}',
+                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
                         type: 'WARNING'
                     });
                 }
@@ -217,30 +191,32 @@ actions.launchRun = function(message) {
     });
 
     var _emulatePlatform = function(platform) {
-        "use strict";
 
         platform = platform || 'android';
-        var ionicEmulators = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
-        ionicEmulators[platform] = ionicEmulators[platform] || {};
+        var storage = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
+        storage[platform] = storage[platform] || {};
 
         // kill ionic service last emulation
-        if(ionicEmulators[platform].pid) {
-            utils.killProcessPid(ionicEmulators[platform].pid);
+        if(storage[platform].pid) {
+            utils.killProcessPid(storage[platform].pid);
         }
 
         var cmd = {
-            cmd: 'ionic emulate ' + platform + ' --livereload',
+            cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
             path: utils.getSelectedProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
                 var pid = worker._systemWorker.getInfos().pid;
-                ionicEmulators[platform].pid = pid;
-                studio.extension.storage.setItem('ionicEmulators', JSON.stringify(ionicEmulators));
+                var storage = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
+                storage[platform] = storage[platform] || {};
+
+                storage[platform].pid = pid;
+                studio.extension.storage.setItem('ionicEmulators', JSON.stringify(storage));
             }
         };
 
         var worker = utils.executeAsyncCmd(cmd);
-    }
+    };
 };
 
 actions.solutionOpenedHandler = function() {
