@@ -40,7 +40,7 @@ actions.checkDependencies = function() {
                 _updateStatus();
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.trim(),
+                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.replace(/\r?\n|\r/, " "),
                     type: 'LOG'
                 });
 
