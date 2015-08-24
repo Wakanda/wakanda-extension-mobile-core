@@ -5,13 +5,15 @@ var Base64 = require("../lib/base64").Base64;
 var actions = {};
 
 actions.checkDependencies = function() {
-	"use strict";
-	
+    "use strict";
+    
     var status = {};
 
     var _updateStatus = function() {
         studio.extension.storage.setItem('MobileCheck', JSON.stringify(status));
     };
+
+    var currentOs = os.isWindows ? 'windows' : 'mac';
 
     [{ 
         cmd: 'node -v',
@@ -27,22 +29,49 @@ actions.checkDependencies = function() {
     }, {
         cmd: 'xcodebuild -version',
         title: 'xCode',
-        mondatory: false
+        mondatory: false,
+        os: 'mac'
     }, {
-        cmd: 'program=$(which adb) && $program version',
+        cmd: 'adb version',
         title: 'Android SDK',
         mondatory: false
+    }, {
+        cmd: 'echo %JAVA_HOME%',
+        title: 'Environnement variable JAVA_HOME',
+        regEx: /Java\\jdk/,
+        mondatory: true,
+        os: 'windows'
+
+    }, {
+        cmd: 'echo %ANDROID_HOME%',
+        title: 'Environnement variable ANDROID_HOME',
+        regEx: /Android\\android-sdk/,
+        mondatory: true,
+        os: 'windows'
     }].forEach(function(check) {
+
+        if(check.os && check.os !== currentOs) {
+            return;
+        }
+        
         var cmd = {
             cmd: check.cmd,
             onmessage: function(msg) {
-                status[check.title] = true;
+                var valid = ! check.regEx || check.regEx.test(msg);
+                status[check.title] = valid;
                 _updateStatus();
 
-                utils.printConsole({
-                    message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.replace(/\r?\n|\r/, " "),
-                    type: 'LOG'
-                });
+                if(valid) {
+                    utils.printConsole({
+                        message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.replace(/\r?\n|\r/, " "),
+                        type: 'LOG'
+                    });
+                } else {
+                    utils.printConsole({
+                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                        type: check.mondatory ? 'ERROR' : 'WARNING' 
+                    });
+                }
 
             },
             onerror: function(msg) {
@@ -56,7 +85,7 @@ actions.checkDependencies = function() {
 
             },
             onterminated: function(msg) {
-                if (typeof status[check.title] == 'undefined') {
+                if (typeof status[check.title] === 'undefined') {
                     status[check.title] = false;
                     _updateStatus();
 
@@ -73,11 +102,11 @@ actions.checkDependencies = function() {
         utils.executeAsyncCmd(cmd);
     });
 
-	return true;
+    return true;
 };
 
 actions.launchTest = function(message) {
-	"use strict";
+    "use strict";
 
     var config = message.params,
         ionicServices = JSON.parse(studio.extension.storage.getItem('ionicServices') || '{}'),
@@ -150,7 +179,9 @@ actions.launchTest = function(message) {
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
             path: utils.getSelectedProjectPath(),
-            onmessage: _display
+            onmessage: _display,
+            onterminated: function(msg) {
+            }
         };
 
         utils.executeAsyncCmd(command);
@@ -163,7 +194,7 @@ actions.launchTest = function(message) {
 };
 
 actions.launchRun = function(message) {
-	"use strict";
+    "use strict";
 
     var projectName = utils.getSelectedProjectPath();
 
@@ -220,13 +251,13 @@ actions.launchRun = function(message) {
 };
 
 actions.solutionOpenedHandler = function() {
-	"use strict";
+    "use strict";
 
     studio.extension.storage.setItem('ionicServices', '{}');
 };
 
 actions.solutionClosedHandler = function() {
-	"use strict";
+    "use strict";
 };
 
 actions.getStorage = function() {
@@ -234,16 +265,14 @@ actions.getStorage = function() {
 };
 
 exports.handleMessage = function handleMessage(message) {
-	"use strict";
-	var actionName;
+    "use strict";
+    var actionName;
 
-	actionName = message.action;
+    actionName = message.action;
 
-	if (!actions.hasOwnProperty(actionName)) {
-		studio.alert("I don't know about this message: " + actionName);
-		return false;
-	}
-	actions[actionName](message);
+    if (!actions.hasOwnProperty(actionName)) {
+        studio.alert("I don't know about this message: " + actionName);
+        return false;
+    }
+    actions[actionName](message);
 };
-
-
