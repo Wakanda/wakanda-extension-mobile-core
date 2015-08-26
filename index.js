@@ -4,6 +4,10 @@ var Base64 = require("../lib/base64").Base64;
 
 var actions = {};
 
+actions.initPreferences = function() {
+    studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
+};
+
 actions.checkDependencies = function() {
     "use strict";
     

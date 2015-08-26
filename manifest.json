@@ -9,6 +9,13 @@
         ],
         "actions": [
             {
+                "name": "initPreferences",
+                "title": "Add studio Ionic preferences",
+                "trigger": [
+                    { "event": "onStudioStart" }
+                ]
+            },
+            {
                 "name": "checkDependencies",
                 "title": "Check studio Ionic dependencies",
                 "trigger": [
