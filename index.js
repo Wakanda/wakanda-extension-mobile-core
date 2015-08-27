@@ -119,11 +119,19 @@ actions.launchTest = function(message) {
     var config = message.params,
         ionicServices = JSON.parse(studio.extension.storage.getItem('ionicServices') || '{}'),
         projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getSelectedProjectPath(),
         port;
 
     // if no (or more than one) project is selected
     if(! projectName) {
         studio.alert('You must select one and only project in your Wakanda Solution to launch Test.');
+        return;
+    }
+
+    // test ionic project
+    var file = File(projectPath + '/ionic.project');
+    if(! file.exists) {
+        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
         return;
     }
 
@@ -204,7 +212,8 @@ actions.launchTest = function(message) {
 actions.launchRun = function(message) {
     "use strict";
 
-    var projectName = utils.getSelectedProjectPath();
+    var projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getSelectedProjectPath();
 
     // if no (or more than one) project is selected
     if(! projectName) {
@@ -212,6 +221,17 @@ actions.launchRun = function(message) {
         return;
     }
 
+    // test ionic project
+    var file = File(projectPath + '/ionic.project');
+    if(! file.exists) {
+        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
+        return;
+    }
+
+    if(! platform.android && ! platform.ios) {
+        studio.alert('You must select Android or iOs to launch Run emulator.');
+        return;
+    }
 
     ['android', 'ios'].forEach(function(platform) {
         if(message.params[platform]) {
