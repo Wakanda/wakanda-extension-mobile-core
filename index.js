@@ -38,14 +38,18 @@ actions.checkDependencies = function() {
     }, {
         cmd: 'echo %JAVA_HOME%',
         title: 'Environnement variable JAVA_HOME',
-        regEx: /Java\\jdk/,
+        validationCallback: function(msg) {
+            return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%JAVA_HOME%';
+        },
         mondatory: true,
         os: 'windows'
 
     }, {
         cmd: 'echo %ANDROID_HOME%',
         title: 'Environnement variable ANDROID_HOME',
-        regEx: /Android\\android-sdk/,
+        validationCallback: function(msg) {
+            return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%ANDROID_HOME%';
+        },
         mondatory: true,
         os: 'windows'
     }].forEach(function(check) {
@@ -57,7 +61,7 @@ actions.checkDependencies = function() {
         var cmd = {
             cmd: check.cmd,
             onmessage: function(msg) {
-                var valid = ! check.regEx || check.regEx.test(msg);
+                var valid = ! check.validationCallback || check.validationCallback(msg);
                 status[check.title] = valid;
                 _updateStatus();
 
