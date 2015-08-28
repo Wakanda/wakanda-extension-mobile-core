@@ -228,7 +228,7 @@ actions.launchRun = function(message) {
         return;
     }
 
-    if(! platform.android && ! platform.ios) {
+    if(! message.params.android && ! message.params.ios) {
         studio.alert('You must select Android or iOs to launch Run emulator.');
         return;
     }
@@ -238,9 +238,9 @@ actions.launchRun = function(message) {
             // add the platform
             // and when terminated, launch emulate
             var cmd = {
-                'cmd': 'ionic platform add ' + platform,
-                'path': projectName,
-                'onterminated': function(msg) {
+                cmd: 'ionic platform add ' + platform,
+                path: projectPath,
+                onterminated: function(msg) {
                     _emulatePlatform(platform);
                 }
             };
