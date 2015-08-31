@@ -120,7 +120,8 @@ actions.launchTest = function(message) {
         ionicServices = JSON.parse(studio.extension.storage.getItem('ionicServices') || '{}'),
         projectName = utils.getSelectedProjectName(),
         projectPath = utils.getSelectedProjectPath(),
-        port;
+        port,
+        serverLaunched = false;
 
     // if no (or more than one) project is selected
     if(! projectName) {
@@ -140,25 +141,29 @@ actions.launchTest = function(message) {
             'cmd_opt': '--lab',
             'prefix': 'ionic-lab',
             'title': 'iOS / Android',
-            'icon': 'iosandroid.png'
+            'icon': 'icons/iosandroid.png',
+            'html': 'html/android-ios.html'
         },
         'android': {
             'cmd_opt': '--platform android',
             'prefix': '?ionicplatform=android#/tab/dash',
             'title': 'Android',
-            'icon': 'android.png'
+            'icon': 'icons/android.png',
+            'html': 'html/android.html'
         },
         'ios': {
             'cmd_opt': '--platform ios',
             'prefix': '?ionicplatform=ios#/tab/dash',
             'title': 'iOS',
-            'icon': 'ios.png'
+            'icon': 'icons/ios.png',
+            'html': 'html/ios.html'
         },
         'app': {
             'cmd_opt': '',
             'prefix': '#/tab/dash',
             'title': 'Mobile App',
-            'icon': 'app.png'
+            'icon': 'icons/app.png',
+            'html': 'html/app.html'
         }
     };
 
@@ -166,38 +171,54 @@ actions.launchTest = function(message) {
         return 'http://127.0.0.1' + ':' + port + '/' + opt[config.selected].prefix;
     };
 
-    var _display = function() {
-        if(config.chromePreview) {
-            var command = {
-                cmd: os.isWindows ? 'start chrome ' + _getUrl() : "open -a 'Google Chrome' " + _getUrl()
-            };
+    var _chromeDisplay = function() {
+        var command = {
+            cmd: os.isWindows ? 'start chrome ' + _getUrl() : "open -a 'Google Chrome' " + _getUrl()
+        };
 
-            utils.executeAsyncCmd(command);
+        utils.executeAsyncCmd(command);
+    };
 
-        } else {
-            if(config.selected === 'android-ios') {
-                studio.extension.registerTabPage('android-ios.html', opt[config.selected].icon || '', opt[config.selected].title);
-                studio.extension.openPageInTab('android-ios.html', opt[config.selected].title, false, false, false, '', 'url=' + _getUrl());
-                    
-            } else {
-                studio.extension.registerTabPage(_getUrl(), opt[config.selected].icon || '', opt[config.selected].title);
-                studio.extension.openPageInTab(_getUrl(), opt[config.selected].title, false);
-            }
-        }   
+    var _studioDisplay = function() {
+        studio.extension.registerTabPage(opt[config.selected].html, opt[config.selected].icon || '', opt[config.selected].title);
+        studio.extension.openPageInTab(opt[config.selected].html, opt[config.selected].title, false, false, false, '', 'url=' + _getUrl() + '&serverLaunched=' + serverLaunched);
+    };
+
+    var _chromePending = function() {
+        studio.extension.registerTabPage('html/chrome.html', opt[config.selected].icon || '', opt[config.selected].title);
+        studio.extension.openPageInTab('html/chrome.html', opt[config.selected].title, false, false, false, '', 'url=' + _getUrl() + '&serverLaunched=' + serverLaunched);
     };
 
     if(ionicServices[projectName]) {
+        // get launched ionic server port
         port = ionicServices[projectName].port;
-        _display();
+        serverLaunched = true;
 
+        if(config.chromePreview) {
+            _chromeDisplay();
+        } else {
+            _studioDisplay();
+        }
     } else {
+        // get available port
         port = utils.getAvailablePort();
+
+        // if studio option, launch disply pending page
+        if(config.chromePreview) {
+            _chromePending();
+        } else {
+            _studioDisplay();
+        }
+
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
             path: utils.getSelectedProjectPath(),
-            onmessage: _display,
-            onterminated: function(msg) {
-            }
+            onmessage: function(msg) {
+                if(config.chromePreview) {
+                    _chromeDisplay();
+                }
+            },
+            onterminated: function(msg) {}
         };
 
         utils.executeAsyncCmd(command);
@@ -205,8 +226,6 @@ actions.launchTest = function(message) {
         ionicServices[projectName] = { port: port };
         studio.extension.storage.setItem('ionicServices', JSON.stringify(ionicServices));
     }
-
-    return true;
 };
 
 actions.launchRun = function(message) {
