@@ -1,10 +1,9 @@
-var shell = require("../lib/shellWorker");
 var utils = require("../lib/utils");
-var Base64 = require("../lib/base64").Base64;
 
 var actions = {};
 
 actions.initPreferences = function() {
+    "use strict";
     studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
 };
 
@@ -12,10 +11,6 @@ actions.checkDependencies = function() {
     "use strict";
     
     var status = {};
-
-    var _updateStatus = function() {
-        studio.extension.storage.setItem('MobileCheck', JSON.stringify(status));
-    };
 
     var currentOs = os.isWindows ? 'windows' : 'mac';
 
@@ -67,7 +62,8 @@ actions.checkDependencies = function() {
             onmessage: function(msg) {
                 var valid = ! check.validationCallback || check.validationCallback(msg);
                 status[check.title] = valid;
-                _updateStatus();
+
+                utils.setStorage({ name: 'checks', value: status });
 
                 if(valid) {
                     utils.printConsole({
@@ -84,7 +80,8 @@ actions.checkDependencies = function() {
             },
             onerror: function(msg) {
                 status[check.title] = false;
-                _updateStatus();
+
+                utils.setStorage({ name: 'checks', value: status });
 
                 utils.printConsole({
                     message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
@@ -95,7 +92,8 @@ actions.checkDependencies = function() {
             onterminated: function(msg) {
                 if (typeof status[check.title] === 'undefined') {
                     status[check.title] = false;
-                    _updateStatus();
+                    
+                    utils.setStorage({ name: 'checks', value: status });
 
                     utils.printConsole({
                         message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
@@ -117,7 +115,6 @@ actions.launchTest = function(message) {
     "use strict";
 
     var config = message.params,
-        ionicServices = JSON.parse(studio.extension.storage.getItem('ionicServices') || '{}'),
         projectName = utils.getSelectedProjectName(),
         projectPath = utils.getSelectedProjectPath(),
         port,
@@ -189,9 +186,11 @@ actions.launchTest = function(message) {
         studio.extension.openPageInTab('html/chrome.html', opt[config.selected].title, false, false, false, '', 'url=' + _getUrl() + '&serverLaunched=' + serverLaunched);
     };
 
-    if(ionicServices[projectName]) {
+
+    var storage = utils.getStorage('services');
+    if(storage[projectName]) {
         // get launched ionic server port
-        port = ionicServices[projectName].port;
+        port = storage[projectName].port;
         serverLaunched = true;
 
         if(config.chromePreview) {
@@ -210,10 +209,16 @@ actions.launchTest = function(message) {
             _studioDisplay();
         }
 
+        // save the launched ionic services
+        utils.setStorage({ name: 'services', key: projectName, value: {  port: port } });
+
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
             path: utils.getSelectedProjectPath(),
             onmessage: function(msg) {
+                // save the pid of the process    
+                utils.setStorage({ name: 'services', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
+
                 if(config.chromePreview) {
                     _chromeDisplay();
                 }
@@ -221,10 +226,7 @@ actions.launchTest = function(message) {
             onterminated: function(msg) {}
         };
 
-        utils.executeAsyncCmd(command);
-
-        ionicServices[projectName] = { port: port };
-        studio.extension.storage.setItem('ionicServices', JSON.stringify(ionicServices));
+        var worker = utils.executeAsyncCmd(command);
     }
 };
 
@@ -271,7 +273,8 @@ actions.launchRun = function(message) {
     var _emulatePlatform = function(platform) {
 
         platform = platform || 'android';
-        var storage = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
+
+        var storage = utils.getStorage('emulators');
         storage[platform] = storage[platform] || {};
 
         // kill ionic service last emulation
@@ -284,12 +287,7 @@ actions.launchRun = function(message) {
             path: utils.getSelectedProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
-                var pid = worker._systemWorker.getInfos().pid;
-                var storage = JSON.parse(studio.extension.storage.getItem('ionicEmulators') || '{}');
-                storage[platform] = storage[platform] || {};
-
-                storage[platform].pid = pid;
-                studio.extension.storage.setItem('ionicEmulators', JSON.stringify(storage));
+                utils.setStorage({ name: 'emulators', key: platform, value: {  pid: worker._systemWorker.getInfos().pid } });
             }
         };
 
@@ -297,10 +295,30 @@ actions.launchRun = function(message) {
     };
 };
 
+actions.stopProjectIonicSerices = function() {
+    "use strict";
+    var services = utils.getStorage('services');
+
+    var emulators =  utils.getStorage('emulators');
+
+    // kill all launched ionic process
+    [services, emulators].forEach(function(storage) {
+        Object.keys(storage).forEach(function(elm) {
+            if(storage[elm].pid) {
+                studio.log('>>>> pid : ' + storage[elm].pid);
+                utils.killProcessPid(storage[elm].pid);
+                delete storage[elm];
+            }
+        });
+    });
+
+    utils.setStorage({ name: 'services', value: services, notExtend: true });
+    utils.setStorage({ name: 'emulators', value: emulators, notExtend: true });
+};
+
 actions.solutionOpenedHandler = function() {
     "use strict";
 
-    studio.extension.storage.setItem('ionicServices', '{}');
 };
 
 actions.solutionClosedHandler = function() {
@@ -308,7 +326,9 @@ actions.solutionClosedHandler = function() {
 };
 
 actions.getStorage = function() {
-    studio.log('>>> storage : ' + studio.extension.storage.getItem('MobileCheck'));
+    studio.log('-> storage checks : ' + studio.extension.storage.getItem('checks'));
+    studio.log('-> storage services : ' + studio.extension.storage.getItem('services'));
+    studio.log('-> storage emulators : ' + studio.extension.storage.getItem('emulators'));
 };
 
 exports.handleMessage = function handleMessage(message) {
