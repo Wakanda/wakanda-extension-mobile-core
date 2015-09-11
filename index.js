@@ -301,11 +301,11 @@ actions.stopProjectIonicSerices = function() {
 
     var emulators =  utils.getStorage('emulators');
 
+    studio.log('Stopping launched ionic project process');
     // kill all launched ionic process
     [services, emulators].forEach(function(storage) {
         Object.keys(storage).forEach(function(elm) {
             if(storage[elm].pid) {
-                studio.log('>>>> pid : ' + storage[elm].pid);
                 utils.killProcessPid(storage[elm].pid);
                 delete storage[elm];
             }
