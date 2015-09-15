@@ -91,7 +91,7 @@ actions.checkDependencies = function() {
                 if(valid) {
                     utils.printConsole({
                         message: check.title + ': {%span class="green"%}Found{%/span%} - ' + msg.replace(/\r?\n|\r/, " "),
-                        type: 'LOG'
+                        type: 'INFO'
                     });
                 } else {
                     utils.printConsole({
@@ -296,60 +296,6 @@ actions.launchRun = function(message) {
     };
 };
 
-actions.launchBuild = function(message) {
-    "use strict";
-
-    if(! checkProject()) {
-        return;
-    }
-
-    if(! message.params.android && ! message.params.ios) {
-        studio.alert('You must select Android or iOs to launch Run emulator.');
-        return;
-    }
-
-    var build = {};
-    function _enableBuild(enable) {
-        if(message.params.origin === 'MobileTest') {
-            studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
-        }
-    }
-
-    ['android', 'ios'].forEach(function(platform) {
-        if(message.params[platform]) {
-            build[platform] = true;
-            var platformName = platform === 'android' ? 'Android' : 'iOs';
-            var cmd = {
-                cmd: 'ionic build ' + platform,
-                path: utils.getSelectedProjectPath(),
-                onmessage: function(msg) {
-                    utils.printConsole({ type: 'info', category: 'build', message: 'Building your application for  ' + platformName + ' ...' });
-                },
-                onerror: function(msg) {
-                    // enable build button when build is terminated
-                    build[platform] = false;
-
-                    _enableBuild(! build.android && ! build.ios);
-
-                    utils.printConsole({ type: 'error', category: 'build', message: 'Error when building application for ' + platformName + ' .'});
-                },
-                onterminated: function(msg) {
-                    // enable build button when build is terminated
-                    build[platform] = false;
-
-                    _enableBuild(! build.android && ! build.ios);
-
-                    utils.printConsole({ type: 'info', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
-                    utils.printConsole({ type: 'info', category: 'build', message: 'Your application build are available.' });
-
-                }
-            };
-
-            _enableBuild(false);
-            utils.executeAsyncCmd(cmd);   
-        }
-    });
-};
 
 actions.stopProjectIonicSerices = function() {
     "use strict";
@@ -399,3 +345,65 @@ exports.handleMessage = function handleMessage(message) {
     }
     actions[actionName](message);
 };
+
+actions.launchBuild = function(message) {
+    "use strict";
+
+    if(! checkProject()) {
+        return;
+    }
+
+    if(! message.params.android && ! message.params.ios) {
+        studio.alert('You must select Android or iOs to launch Run emulator.');
+        return;
+    }
+
+    var build = {};
+    function _enableBuild(enable) {
+        if(message.params.origin === 'MobileTest') {
+            studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
+        }
+    }
+
+    ['android', 'ios'].forEach(function(platform) {
+        if(message.params[platform]) {
+
+            build[platform] = true;
+            var platformName = platform === 'android' ? 'Android' : 'iOs';
+
+            var cmd = {
+                cmd: 'ionic build ' + platform + ' --release',
+                path: utils.getSelectedProjectPath(),
+                onmessage: function(msg) {
+                    utils.printConsole({ type: 'INFO', category: 'build', message: 'Building your application for  ' + platformName + ' ...' });
+                },
+                onerror: function(msg) {
+                    // enable build button when build is terminated
+                    build[platform] = false;
+
+                    _enableBuild(! build.android && ! build.ios);
+
+                    utils.printConsole({ type: 'ERROR', category: 'build', message: 'Error when building application for ' + platformName + ' .'});
+                },
+                onterminated: function(msg) {
+                    // enable build button when build is terminated
+                    build[platform] = false;
+
+                    _enableBuild(! build.android && ! build.ios);
+                 
+                    // check if builded without error
+                    if(msg.exitStatus === 0) {
+                        utils.printConsole({ type: 'INFO', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
+                        utils.printConsole({ type: 'INFO', category: 'build', message: 'Your application build are available.' });
+                    } else {
+                        utils.printConsole({ type: 'ERROR', category: 'build', message: 'Build existed with error. Exit status : ' + msg.exitStatus });
+                    }
+                }
+            };
+
+            _enableBuild(false);
+            utils.executeAsyncCmd(cmd);   
+        }
+    });
+};
+
