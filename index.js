@@ -318,17 +318,12 @@ actions.launchBuild = function(message) {
     ['android', 'ios'].forEach(function(platform) {
         if(message.params[platform]) {
             build[platform] = true;
+            var platformName = platform === 'android' ? 'Android' : 'iOs';
             var cmd = {
                 cmd: 'ionic build ' + platform,
                 path: utils.getSelectedProjectPath(),
-                onterminated: function(msg) {
-                    // enable build button when build is terminated
-                    build[platform] = false;
-
-                    _enableBuild(! build.android && ! build.ios);
-
-                    utils.printConsole({ category: 'build', message: '> Build for platform ' + platform + ' is terminated with success.' });
-
+                onmessage: function(msg) {
+                    utils.printConsole({ type: 'info', category: 'build', message: 'Building your application for  ' + platformName + ' ...' });
                 },
                 onerror: function(msg) {
                     // enable build button when build is terminated
@@ -336,10 +331,17 @@ actions.launchBuild = function(message) {
 
                     _enableBuild(! build.android && ! build.ios);
 
-                    utils.printConsole({ category: 'build', message: '> Error when building platform ' + platform + ' .'});
+                    utils.printConsole({ type: 'error', category: 'build', message: 'Error when building application for ' + platformName + ' .'});
                 },
-                onmessage: function(msg) {
-                    utils.printConsole({ category: 'build', message: '> Build for platform ' + platform + ' ...' });
+                onterminated: function(msg) {
+                    // enable build button when build is terminated
+                    build[platform] = false;
+
+                    _enableBuild(! build.android && ! build.ios);
+
+                    utils.printConsole({ type: 'info', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
+                    utils.printConsole({ type: 'info', category: 'build', message: 'Your application build are available.' });
+
                 }
             };
 
