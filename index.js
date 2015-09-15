@@ -1,4 +1,27 @@
 var utils = require("../lib/utils");
+var Base64 = require("../lib/base64").Base64;
+
+function checkProject() {
+    "use strict";
+
+    var projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getSelectedProjectPath();
+
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only project in your Wakanda Solution to launch Run.');
+        return false;
+    }
+
+    // test ionic project
+    var file = File(projectPath + '/ionic.project');
+    if(! file.exists) {
+        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
+        return false;
+    }
+
+    return true;
+}
 
 var actions = {};
 
@@ -116,21 +139,11 @@ actions.launchTest = function(message) {
 
     var config = message.params,
         projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath(),
         port,
         serverLaunched = false;
 
-    // if no (or more than one) project is selected
-    if(! projectName) {
-        studio.alert('You must select one and only project in your Wakanda Solution to launch Test.');
-        return;
-    }
-
-    // test ionic project
-    var file = File(projectPath + '/ionic.project');
-    if(! file.exists) {
-        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
-        return;
+    if(! checkProject()) {
+        return;    
     }
 
     var opt = {
@@ -233,19 +246,7 @@ actions.launchTest = function(message) {
 actions.launchRun = function(message) {
     "use strict";
 
-    var projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath();
-
-    // if no (or more than one) project is selected
-    if(! projectName) {
-        studio.alert('You must select one and only project in your Wakanda Solution to launch Run.');
-        return;
-    }
-
-    // test ionic project
-    var file = File(projectPath + '/ionic.project');
-    if(! file.exists) {
-        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
+    if(! checkProject()) {
         return;
     }
 
@@ -260,7 +261,7 @@ actions.launchRun = function(message) {
             // and when terminated, launch emulate
             var cmd = {
                 cmd: 'ionic platform add ' + platform,
-                path: projectPath,
+                path: utils.getSelectedProjectPath(),
                 onterminated: function(msg) {
                     _emulatePlatform(platform);
                 }
@@ -293,6 +294,59 @@ actions.launchRun = function(message) {
 
         var worker = utils.executeAsyncCmd(cmd);
     };
+};
+
+actions.launchBuild = function(message) {
+    "use strict";
+
+    if(! checkProject()) {
+        return;
+    }
+
+    if(! message.params.android && ! message.params.ios) {
+        studio.alert('You must select Android or iOs to launch Run emulator.');
+        return;
+    }
+
+    var build = {};
+    function _enableBuild(enable) {
+        if(message.params.origin === 'MobileTest') {
+            studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
+        }
+    }
+
+    ['android', 'ios'].forEach(function(platform) {
+        if(message.params[platform]) {
+            build[platform] = true;
+            var cmd = {
+                cmd: 'ionic build ' + platform,
+                path: utils.getSelectedProjectPath(),
+                onterminated: function(msg) {
+                    // enable build button when build is terminated
+                    build[platform] = false;
+
+                    _enableBuild(! build.android && ! build.ios);
+
+                    utils.printConsole({ category: 'build', message: '> Build for platform ' + platform + ' is terminated with success.' });
+
+                },
+                onerror: function(msg) {
+                    // enable build button when build is terminated
+                    build[platform] = false;
+
+                    _enableBuild(! build.android && ! build.ios);
+
+                    utils.printConsole({ category: 'build', message: '> Error when building platform ' + platform + ' .'});
+                },
+                onmessage: function(msg) {
+                    utils.printConsole({ category: 'build', message: '> Build for platform ' + platform + ' ...' });
+                }
+            };
+
+            _enableBuild(false);
+            utils.executeAsyncCmd(cmd);   
+        }
+    });
 };
 
 actions.stopProjectIonicSerices = function() {
