@@ -1,5 +1,5 @@
-var utils = require("../lib/utils");
-var Base64 = require("../lib/base64").Base64;
+var utils = require("./utils");
+var Base64 = require("base64").Base64;
 
 function checkProject() {
     "use strict";
@@ -328,6 +328,8 @@ actions.solutionClosedHandler = function() {
 };
 
 actions.getStorage = function() {
+    "use strict";
+
     studio.log('-> storage checks : ' + studio.extension.storage.getItem('checks'));
     studio.log('-> storage services : ' + studio.extension.storage.getItem('services'));
     studio.log('-> storage emulators : ' + studio.extension.storage.getItem('emulators'));
@@ -335,6 +337,7 @@ actions.getStorage = function() {
 
 exports.handleMessage = function handleMessage(message) {
     "use strict";
+
     var actionName;
 
     actionName = message.action;
@@ -358,13 +361,13 @@ actions.launchBuild = function(message) {
         return;
     }
 
-    var build = {};
     function _enableBuild(enable) {
         if(message.params.origin === 'MobileTest') {
             studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
         }
     }
 
+    var build = {};
     ['android', 'ios'].forEach(function(platform) {
         if(message.params[platform]) {
 
@@ -406,4 +409,3 @@ actions.launchBuild = function(message) {
         }
     });
 };
-
