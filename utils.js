@@ -14,6 +14,7 @@ if(! os.isWindows) {
 
 function getMessageString(options) {
     "use strict";
+
 	var message = {
 		msg: options.message,
 		type: options.type || null,
@@ -24,6 +25,7 @@ function getMessageString(options) {
 
 function printConsole(obj) {
     "use strict";
+    
     studio.sendCommand(getMessageString(obj));
 }
 

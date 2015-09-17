@@ -398,6 +398,8 @@ actions.launchBuild = function(message) {
                     if(msg.exitStatus === 0) {
                         utils.printConsole({ type: 'INFO', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
                         utils.printConsole({ type: 'INFO', category: 'build', message: 'Your application build are available.' });
+                        
+                        utils.printConsole({ type: 'INFO', category: 'build', message: '{%a href="#" onClick="studio.sendCommand(\'MobileCore.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output {%/a%}' });
                     } else {
                         utils.printConsole({ type: 'ERROR', category: 'build', message: 'Build existed with error. Exit status : ' + msg.exitStatus });
                     }
@@ -408,4 +410,13 @@ actions.launchBuild = function(message) {
             utils.executeAsyncCmd(cmd);   
         }
     });
+};
+
+actions.openBuildFolder = function(message) {
+    "use strict";
+
+    utils.executeAsyncCmd({ 
+        cmd: os.isWindows ? 'explorer .' : 'open .', 
+        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/build/'
+    });    
 };
