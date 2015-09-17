@@ -372,7 +372,7 @@ actions.launchBuild = function(message) {
         if(message.params[platform]) {
 
             build[platform] = true;
-            var platformName = platform === 'android' ? 'Android' : 'iOs';
+            var platformName = platform === 'android' ? 'Android' : 'iOS';
 
             var cmd = {
                 cmd: 'ionic build ' + platform + ' --release',
