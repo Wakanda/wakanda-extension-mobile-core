@@ -9,7 +9,7 @@ function checkProject() {
 
     // if no (or more than one) project is selected
     if(! projectName) {
-        studio.alert('You must select one and only project in your Wakanda Solution to launch Run.');
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
         return false;
     }
 
@@ -251,7 +251,7 @@ actions.launchRun = function(message) {
     }
 
     if(! message.params.android && ! message.params.ios) {
-        studio.alert('You must select Android or iOs to launch Run emulator.');
+        studio.alert('You must select Android or iOS to launch Run emulator.');
         return;
     }
 
@@ -357,7 +357,7 @@ actions.launchBuild = function(message) {
     }
 
     if(! message.params.android && ! message.params.ios) {
-        studio.alert('You must select Android or iOs to launch Run emulator.');
+        studio.alert('You must select Android or iOS to launch Build.');
         return;
     }
 
