@@ -20,7 +20,7 @@ function getMessageString(options) {
 		type: options.type || null,
 		category: options.category || 'env'
     };
-	return 'MobileConsole.append.' + Base64.encode(JSON.stringify(message));
+	return 'wakanda-extension-mobile-console.append.' + Base64.encode(JSON.stringify(message));
 }
 
 function printConsole(obj) {

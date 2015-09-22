@@ -364,8 +364,8 @@ actions.launchBuild = function(message) {
 
     var build = {};
     function _enableBuild(enable) {
-        if(message.params.origin === 'MobileTest') {
-            studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
+        if(message.params.origin === 'wakanda-extension-mobile-test') {
+            studio.sendCommand('wakanda-extension-mobile-test.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
         }
     }
 
@@ -398,7 +398,7 @@ actions.launchBuild = function(message) {
                     utils.printConsole({ type: 'INFO', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
                     utils.printConsole({ type: 'INFO', category: 'build', message: 'Your application build are available.' });
                     
-                    utils.printConsole({ type: 'INFO', category: 'build', message: '{%a href="#" onClick="studio.sendCommand(\'MobileCore.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output {%/a%}' });
+                    utils.printConsole({ type: 'INFO', category: 'build', message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output {%/a%}' });
                 } else {
                     utils.printConsole({ type: 'ERROR', category: 'build', message: 'Build existed with error. Exit status : ' + msg.exitStatus });
                 }
