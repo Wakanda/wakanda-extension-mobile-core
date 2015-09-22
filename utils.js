@@ -1,4 +1,4 @@
-var Base64 = require("base64").Base64;
+var Base64 = require("base64");
 var shell = require("shellWorker");
 
 var bash_profile = {};
@@ -50,6 +50,7 @@ function getSelectedProjectName() {
 
 function stringifyFunc(obj) {
     "use strict";
+
     return JSON.stringify(obj, function(key, value) {
         return (typeof value === 'function') ? value.toString() : value;
     });
@@ -230,6 +231,58 @@ function setStorage(params) {
 }
 
 
+/*
+ *  get connected devices infos
+ * */
+function getConnectedDevices() {
+    var devices = {
+        ios: {
+            connected: false
+        },
+        android: {
+            connected: false    
+        }
+    },
+    output;
+
+    // check for the iphone device
+    if(! os.isWindows) {
+        try {
+            output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
+            devices.ios.connected = /iPhone/.test(output);
+        } catch(e) {
+            studio.log(e.message);
+        }
+    } 
+
+    // check for the android device
+    try {
+        output = executeSyncCmd( {cmd: 'adb devices'} );
+     
+        var regex = /^(\w+)( |\t)+device$/;
+
+        var androids = [];
+        output.split(/\n|\n\r/).forEach(function(row) {
+            var match = regex.exec(row);
+            if(match) {
+                androids.push({ id: match[1] });      
+            }
+        });
+        
+        if(androids.length > 1) {
+            studio.warn('There is more than android device connected. By default ' + androids[0].id + ' device id will be used by default');
+        }
+
+        if(androids.length) {
+            devices.android.connected = true;
+            devices.android.id = androids[0].id;
+        }
+    } catch(e) {
+        studio.log(e.message);
+    }
+
+    return devices;
+}
 
 exports.printConsole = printConsole;
 exports.getMessageString = getMessageString;
@@ -243,3 +296,4 @@ exports.killProcessPid = killProcessPid;
 exports.getStorage = getStorage;
 exports.setStorage = setStorage;
 exports.getLocalIP = getLocalIP;
+exports.getConnectedDevices = getConnectedDevices;
