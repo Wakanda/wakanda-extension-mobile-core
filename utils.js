@@ -56,36 +56,18 @@ function stringifyFunc(obj) {
     });
 }
 
-function getLocalIP() {
-    "use strict";
-
-    if(os.isWindows) {
-        var output = shell.exec('ipconfig'),
-            regex = new RegExp(/IPv4.+: (\d+\.\d+\.\d+\.\d+)/g),
-            res,
-            ip;
-        while(res = regex.exec(output)) {
-            ip = res[1]; 
-        }
-
-        return ip;
-
-    } else {
-        return shell.exec('ipconfig getifaddr en0').replace(/\r?\n|\r/, '');
-    }
-}
-
 function getAvailablePort() {
     "use strict";
 
     var res,
         ports = [],
         netstatOutput = shell.exec('netstat -an -p tcp'),
-        ip = getLocalIP(),
-        regex = new RegExp('(127\\.0\\.0\\.1)' + '|' + '(' + ip.replace(/\./, '\\.') + ')' + '\\.(\\d+)', 'g');
+        ipList = studio.getLocalIpAddresses().split(';'),
+        ips = ipList.map(function(ip) { return '(' + ip.replace(/\./, '\\.') + ')'; }).join('|'),
+        regex = new RegExp('(' + ips + ')' + '\\.(\\d+)', 'g');
 
     while(res = regex.exec(netstatOutput)) {
-        ports.push(parseFloat(res[1], 10));
+        ports.push(parseFloat(res.pop(), 10));
     }
     var port = 8100;
     while(true) {
@@ -236,24 +218,20 @@ function setStorage(params) {
  * */
 function getConnectedDevices() {
     var devices = {
-        ios: {
-            connected: false
-        },
-        android: {
-            connected: false    
-        }
+        ios: [],
+        android: []
     },
     output;
 
     // check for the iphone device
-    if(! os.isWindows) {
+    /*if(! os.isWindows) {
         try {
             output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
             devices.ios.connected = /iPhone/.test(output);
         } catch(e) {
             studio.log(e.message);
         }
-    } 
+    } */
 
     // check for the android device
     try {
@@ -261,22 +239,12 @@ function getConnectedDevices() {
      
         var regex = /^(\w+)( |\t)+device$/;
 
-        var androids = [];
         output.split(/\n|\n\r/).forEach(function(row) {
             var match = regex.exec(row);
             if(match) {
-                androids.push({ id: match[1] });      
+                devices.android.push({ id: match[1] });      
             }
         });
-        
-        if(androids.length > 1) {
-            studio.warn('There is more than android device connected. By default ' + androids[0].id + ' device id will be used by default');
-        }
-
-        if(androids.length) {
-            devices.android.connected = true;
-            devices.android.id = androids[0].id;
-        }
     } catch(e) {
         studio.log(e.message);
     }
@@ -295,5 +263,4 @@ exports.executeSyncCmd = executeSyncCmd;
 exports.killProcessPid = killProcessPid;
 exports.getStorage = getStorage;
 exports.setStorage = setStorage;
-exports.getLocalIP = getLocalIP;
 exports.getConnectedDevices = getConnectedDevices;
