@@ -1,4 +1,4 @@
-var Base64 = require("base64").Base64;
+var Base64 = require("base64");
 var shell = require("shellWorker");
 
 var bash_profile = {};
@@ -14,16 +14,18 @@ if(! os.isWindows) {
 
 function getMessageString(options) {
     "use strict";
+
 	var message = {
 		msg: options.message,
 		type: options.type || null,
 		category: options.category || 'env'
     };
-	return 'MobileConsole.append.' + Base64.encode(JSON.stringify(message));
+	return 'wakanda-extension-mobile-console.append.' + Base64.encode(JSON.stringify(message));
 }
 
 function printConsole(obj) {
     "use strict";
+    
     studio.sendCommand(getMessageString(obj));
 }
 
@@ -48,28 +50,10 @@ function getSelectedProjectName() {
 
 function stringifyFunc(obj) {
     "use strict";
+
     return JSON.stringify(obj, function(key, value) {
         return (typeof value === 'function') ? value.toString() : value;
     });
-}
-
-function getLocalIP() {
-    "use strict";
-
-    if(os.isWindows) {
-        var output = shell.exec('ipconfig'),
-            regex = new RegExp(/IPv4.+: (\d+\.\d+\.\d+\.\d+)/g),
-            res,
-            ip;
-        while(res = regex.exec(output)) {
-            ip = res[1]; 
-        }
-
-        return ip;
-
-    } else {
-        return shell.exec('ipconfig getifaddr en0').replace(/\r?\n|\r/, '');
-    }
 }
 
 function getAvailablePort() {
@@ -78,11 +62,12 @@ function getAvailablePort() {
     var res,
         ports = [],
         netstatOutput = shell.exec('netstat -an -p tcp'),
-        ip = getLocalIP(),
-        regex = new RegExp('(127\\.0\\.0\\.1)' + '|' + '(' + ip.replace(/\./, '\\.') + ')' + '\\.(\\d+)', 'g');
+        ipList = studio.getLocalIpAddresses().split(';'),
+        ips = ipList.map(function(ip) { return '(' + ip.replace(/\./, '\\.') + ')'; }).join('|'),
+        regex = new RegExp('(' + ips + ')' + '\\.(\\d+)', 'g');
 
     while(res = regex.exec(netstatOutput)) {
-        ports.push(parseFloat(res[1], 10));
+        ports.push(parseFloat(res.pop(), 10));
     }
     var port = 8100;
     while(true) {
@@ -228,6 +213,44 @@ function setStorage(params) {
 }
 
 
+/*
+ *  get connected devices infos
+ * */
+function getConnectedDevices() {
+    var devices = {
+        ios: [],
+        android: []
+    },
+    output;
+
+    // check for the iphone device
+    /*if(! os.isWindows) {
+        try {
+            output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
+            devices.ios.connected = /iPhone/.test(output);
+        } catch(e) {
+            studio.log(e.message);
+        }
+    } */
+
+    // check for the android device
+    try {
+        output = executeSyncCmd( {cmd: 'adb devices'} );
+     
+        var regex = /^(\w+)( |\t)+device$/;
+
+        output.split(/\n|\n\r/).forEach(function(row) {
+            var match = regex.exec(row);
+            if(match) {
+                devices.android.push({ id: match[1] });      
+            }
+        });
+    } catch(e) {
+        studio.log(e.message);
+    }
+
+    return devices;
+}
 
 exports.printConsole = printConsole;
 exports.getMessageString = getMessageString;
@@ -240,4 +263,4 @@ exports.executeSyncCmd = executeSyncCmd;
 exports.killProcessPid = killProcessPid;
 exports.getStorage = getStorage;
 exports.setStorage = setStorage;
-exports.getLocalIP = getLocalIP;
+exports.getConnectedDevices = getConnectedDevices;

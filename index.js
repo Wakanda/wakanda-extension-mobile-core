@@ -1,5 +1,5 @@
 var utils = require("./utils");
-var Base64 = require("base64").Base64;
+var Base64 = require("base64");
 
 function checkProject() {
     "use strict";
@@ -9,7 +9,7 @@ function checkProject() {
 
     // if no (or more than one) project is selected
     if(! projectName) {
-        studio.alert('You must select one and only project in your Wakanda Solution to launch Run.');
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
         return false;
     }
 
@@ -140,7 +140,8 @@ actions.launchTest = function(message) {
     var config = message.params,
         projectName = utils.getSelectedProjectName(),
         port,
-        serverLaunched = false;
+        serverLaunched = false,
+        chromePreviewed = false;
 
     if(! checkProject()) {
         return;    
@@ -232,7 +233,8 @@ actions.launchTest = function(message) {
                 // save the pid of the process    
                 utils.setStorage({ name: 'services', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
 
-                if(config.chromePreview) {
+                if(config.chromePreview && ! chromePreviewed) {
+                    chromePreviewed = true;
                     _chromeDisplay();
                 }
             },
@@ -243,45 +245,81 @@ actions.launchTest = function(message) {
     }
 };
 
+
 actions.launchRun = function(message) {
-    "use strict";
 
     if(! checkProject()) {
         return;
     }
 
-    if(! message.params.android && ! message.params.ios) {
-        studio.alert('You must select Android or iOs to launch Run emulator.');
+    if(! message.params.emulator.android && ! message.params.emulator.ios && ! message.params.device.android && ! message.params.device.ios) {
+        studio.alert('You must select an emulator or a device to run your application.');
         return;
     }
 
+    var running = {};
     ['android', 'ios'].forEach(function(platform) {
-        if(message.params[platform]) {
+        
+        if(message.params.emulator[platform] || message.params.device[platform]) {
+
             // add the platform
             // and when terminated, launch emulate
             var cmd = {
                 cmd: 'ionic platform add ' + platform,
                 path: utils.getSelectedProjectPath(),
                 onterminated: function(msg) {
-                    _emulatePlatform(platform);
+
+                    updateStatus('addingPlatform_' + platform, false);
+
+                    studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
+
+                    if(message.params.emulator[platform]) {
+                        emulate(platform);
+                    }
+
+                    if(message.params.device[platform]) {
+                        run(platform);
+                    }
                 }
             };
 
-            utils.executeAsyncCmd(cmd);   
+            studio.showMessageOnStatusBar('Ionic adding platform ' + platform + '...');
+            updateStatus('addingPlatform_' + platform, true);
+            utils.executeAsyncCmd(cmd); 
         }
     });
 
-    var _emulatePlatform = function(platform) {
+    function updateStatus(key, value) {
+        running[key] = value;
 
-        platform = platform || 'android';
+        var isRunning = false;
+        Object.keys(running).forEach(function(key) {
+            isRunning = running[key] || isRunning;
+        });
+
+        if(isRunning) {
+            fireEvent('run');
+        } else {
+            fireEvent('runFinished');
+        }
+    }
+
+    function emulate(platform) {
+
+        var platformName = platform === 'android' ? 'Android' : 'iOS';
+
+        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
 
         var storage = utils.getStorage('emulators');
+
         storage[platform] = storage[platform] || {};
 
-        // kill ionic service last emulation
+        // kill the last ionic service for this platform
         if(storage[platform].pid) {
             utils.killProcessPid(storage[platform].pid);
         }
+
+        updateStatus('emulator_' + platform, true);
 
         var cmd = {
             cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
@@ -289,23 +327,78 @@ actions.launchRun = function(message) {
             onmessage: function(msg) {
                 // save ionic process pid
                 utils.setStorage({ name: 'emulators', key: platform, value: {  pid: worker._systemWorker.getInfos().pid } });
+
+                // test if emulator is started
+                var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
+                if(started) {
+                    studio.showMessageOnStatusBar(platformName + ' Simulator started.');
+                    updateStatus('emulator_' + platform, false);
+                }
+            },
+            onterminated: function(msg) {
+            },
+            onerror: function(msg) {
+                if(! /HAX is working an/.test(msg)) {
+                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
+                    updateStatus('emulator_' + platform, false);
+                   
+                }
             }
         };
 
-        var worker = utils.executeAsyncCmd(cmd);
-    };
-};
 
+
+        var worker = utils.executeAsyncCmd(cmd);
+    }
+
+    function run(platform) {
+        var devices = utils.getConnectedDevices();
+
+        var platformName = platform === 'android' ? 'Android' : 'iOS';
+
+        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' device.');
+
+        devices[platform].forEach(function(device) {
+
+            updateStatus('device_' + platform + '_' + device.id, true);
+
+            var cmd = {
+                cmd: (platform === 'android' ? 'ionic run --livereload  --device --target=' + device.id + ' android': 'ionic run ios'),
+                path: utils.getSelectedProjectPath(),
+                onmessage: function(msg) {
+                    utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
+
+                    var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
+                    if(started) {
+                        studio.showMessageOnStatusBar('Application started in the device ' + platformName);
+                        updateStatus('device_' + platform + '_' + device.id, false);
+                    }
+
+                },
+                onterminated: function(msg) {
+                    updateStatus('device_' + platform + '_' + device.id, false);
+                },
+                onerror: function(msg) {
+                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + device.id);
+                    updateStatus('device_' + platform + '_' + device.id, false);
+                }
+            };
+
+            var worker = utils.executeAsyncCmd(cmd);
+        });
+    }
+};
 
 actions.stopProjectIonicSerices = function() {
     "use strict";
-    var services = utils.getStorage('services');
 
+    var services = utils.getStorage('services');
     var emulators =  utils.getStorage('emulators');
+    var devices =  utils.getStorage('devices');
 
     studio.log('Stopping launched ionic project process');
     // kill all launched ionic process
-    [services, emulators].forEach(function(storage) {
+    [services, emulators, devices].forEach(function(storage) {
         Object.keys(storage).forEach(function(elm) {
             if(storage[elm].pid) {
                 utils.killProcessPid(storage[elm].pid);
@@ -316,6 +409,7 @@ actions.stopProjectIonicSerices = function() {
 
     utils.setStorage({ name: 'services', value: services, notExtend: true });
     utils.setStorage({ name: 'emulators', value: emulators, notExtend: true });
+    utils.setStorage({ name: 'devices', value: devices, notExtend: true });
 };
 
 actions.solutionOpenedHandler = function() {
@@ -333,14 +427,13 @@ actions.getStorage = function() {
     studio.log('-> storage checks : ' + studio.extension.storage.getItem('checks'));
     studio.log('-> storage services : ' + studio.extension.storage.getItem('services'));
     studio.log('-> storage emulators : ' + studio.extension.storage.getItem('emulators'));
+    studio.log('-> storage devices : ' + studio.extension.storage.getItem('devices'));
 };
 
 exports.handleMessage = function handleMessage(message) {
     "use strict";
 
-    var actionName;
-
-    actionName = message.action;
+    var actionName = message.action;
 
     if (!actions.hasOwnProperty(actionName)) {
         studio.alert("I don't know about this message: " + actionName);
@@ -357,55 +450,102 @@ actions.launchBuild = function(message) {
     }
 
     if(! message.params.android && ! message.params.ios) {
-        studio.alert('You must select Android or iOs to launch Run emulator.');
+        studio.alert('You must select Android or iOS to launch Build.');
         return;
     }
 
-    function _enableBuild(enable) {
-        if(message.params.origin === 'MobileTest') {
-            studio.sendCommand('MobileTest.enableAction.' + Base64.encode(JSON.stringify({ action: 'launchBuild', enable: enable })));
+
+    var building = {};
+
+    function updateStatus(key, value) {
+        building[key] = value;
+
+        var isBuilding = false;
+        Object.keys(building).forEach(function(key) {
+            isBuilding = building[key] || isBuilding;
+        });
+
+        if(isBuilding) {
+            fireEvent('build');
+        } else {
+            fireEvent('buildFinished');
         }
     }
 
-    var build = {};
-    ['android', 'ios'].forEach(function(platform) {
-        if(message.params[platform]) {
+    // launch the build after adding the platform
+    function build(platform) {
+        var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-            build[platform] = true;
-            var platformName = platform === 'android' ? 'Android' : 'iOs';
+        studio.showMessageOnStatusBar('Building your application for ' + platformName + '.');
+        var cmd = {
+            cmd: 'ionic build ' + platform + ' --release',
+            path: utils.getSelectedProjectPath(),
+            onmessage: function(msg) {
+            },
+            onerror: function(msg) {
+                // enable build button when build is terminated
+                updateStatus(platform, false);
 
-            var cmd = {
-                cmd: 'ionic build ' + platform + ' --release',
-                path: utils.getSelectedProjectPath(),
-                onmessage: function(msg) {
-                    utils.printConsole({ type: 'INFO', category: 'build', message: 'Building your application for  ' + platformName + ' ...' });
-                },
-                onerror: function(msg) {
-                    // enable build button when build is terminated
-                    build[platform] = false;
+                studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
 
-                    _enableBuild(! build.android && ! build.ios);
+            },
+            onterminated: function(msg) {
+                // enable build button when build is terminated
+                updateStatus(platform, false);
 
-                    utils.printConsole({ type: 'ERROR', category: 'build', message: 'Error when building application for ' + platformName + ' .'});
-                },
-                onterminated: function(msg) {
-                    // enable build button when build is terminated
-                    build[platform] = false;
+             
+                // check if builded without error
+                if(msg.exitStatus === 0) {
 
-                    _enableBuild(! build.android && ! build.ios);
-                 
-                    // check if builded without error
-                    if(msg.exitStatus === 0) {
-                        utils.printConsole({ type: 'INFO', category: 'build', message: 'Build for platform ' + platformName + ' is terminated with success.' });
-                        utils.printConsole({ type: 'INFO', category: 'build', message: 'Your application build are available.' });
-                    } else {
-                        utils.printConsole({ type: 'ERROR', category: 'build', message: 'Build existed with error. Exit status : ' + msg.exitStatus });
-                    }
+                    utils.printConsole({ 
+                        type: 'INFO', 
+                        category: 'build',
+                        message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
+                    });
+
+                    studio.showMessageOnStatusBar('Your application build is available.');
+
+                } else {
+                    studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
                 }
-            };
+            }
+        };
+        utils.executeAsyncCmd(cmd);   
+    }
 
-            _enableBuild(false);
-            utils.executeAsyncCmd(cmd);   
+    ['android', 'ios'].forEach(function(platform) {
+        if(! message.params[platform]) {
+            return;
         }
+
+        updateStatus(platform, true);
+        var cmd = {
+            cmd: 'ionic platform add ' + platform,
+            path: utils.getSelectedProjectPath(),
+            onterminated: function(msg) {
+                build(platform);
+            },
+            onerror: function(msg) {
+                if(! /Platform (ios|android) already added/.test(msg)) {
+                    updateStatus(platform, false);
+                }
+            }
+        };
+
+        studio.showMessageOnStatusBar('Adding platform ' + platform + '.');
+        utils.executeAsyncCmd(cmd);   
     });
 };
+
+actions.openBuildFolder = function(message) {
+    "use strict";
+
+    utils.executeAsyncCmd({ 
+        cmd: os.isWindows ? 'explorer .' : 'open .', 
+        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/build/'
+    });    
+};
+
+function fireEvent(eventName) {
+    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName })));
+}
