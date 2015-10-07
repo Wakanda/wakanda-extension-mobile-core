@@ -8,7 +8,7 @@ function parseStudioTabUrl() {
 
     url.split('?').slice(1).join('?').split('&').forEach(function(element) {
         var arr = element.split('=');
-        params[ arr[0] ] = decodeURIComponent( arr[1] );
+        params[ arr.shift() ] = decodeURIComponent( arr.join('=') );
     });
 
     return params;
