@@ -271,6 +271,7 @@ actions.launchRun = function(message) {
 
                     updateStatus('addingPlatform_' + platform, false);
 
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
 
                     if(message.params.emulator[platform]) {
@@ -283,7 +284,7 @@ actions.launchRun = function(message) {
                 }
             };
 
-            studio.showMessageOnStatusBar('Ionic adding platform ' + platform + '...');
+            studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
             updateStatus('addingPlatform_' + platform, true);
             utils.executeAsyncCmd(cmd); 
         }
@@ -308,7 +309,7 @@ actions.launchRun = function(message) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
 
         var storage = utils.getStorage('emulators');
 
@@ -331,6 +332,7 @@ actions.launchRun = function(message) {
                 // test if emulator is started
                 var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                 if(started) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar(platformName + ' Simulator started.');
                     updateStatus('emulator_' + platform, false);
                 }
@@ -339,6 +341,7 @@ actions.launchRun = function(message) {
             },
             onerror: function(msg) {
                 if(! /HAX is working an/.test(msg)) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
                     updateStatus('emulator_' + platform, false);
                    
@@ -356,7 +359,7 @@ actions.launchRun = function(message) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' device.');
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
 
         devices[platform].forEach(function(device) {
 
@@ -370,6 +373,7 @@ actions.launchRun = function(message) {
 
                     var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                     if(started) {
+                        studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Application started in the device ' + platformName);
                         updateStatus('device_' + platform + '_' + device.id, false);
                     }
@@ -379,6 +383,7 @@ actions.launchRun = function(message) {
                     updateStatus('device_' + platform + '_' + device.id, false);
                 },
                 onerror: function(msg) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + device.id);
                     updateStatus('device_' + platform + '_' + device.id, false);
                 }
@@ -476,7 +481,7 @@ actions.launchBuild = function(message) {
     function build(platform) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Building your application for ' + platformName + '.');
+        studio.showProgressBarOnStatusBar('Building your application for ' + platformName + '.');
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
             path: utils.getSelectedProjectPath(),
@@ -486,6 +491,7 @@ actions.launchBuild = function(message) {
                 // enable build button when build is terminated
                 updateStatus(platform, false);
 
+                studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
 
             },
@@ -503,9 +509,11 @@ actions.launchBuild = function(message) {
                         message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
                     });
 
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Your application build is available.');
 
                 } else {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
                 }
             }
@@ -532,7 +540,7 @@ actions.launchBuild = function(message) {
             }
         };
 
-        studio.showMessageOnStatusBar('Adding platform ' + platform + '.');
+        studio.showProgressBarOnStatusBar('Adding platform ' + platform + '.');
         utils.executeAsyncCmd(cmd);   
     });
 };
