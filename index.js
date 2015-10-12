@@ -27,7 +27,9 @@ var actions = {};
 
 actions.initPreferences = function() {
     "use strict";
-    studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
+
+    //studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
+    studio.extension.registerPreferencePanel('MOBILE', 'html/mobilePreferences.html', 300);
 };
 
 actions.checkDependencies = function() {
@@ -274,6 +276,9 @@ actions.launchRun = function(message) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
 
+                    // check network interfaces and set ionic config to right address if necessary
+                    checkInterface();
+
                     if(message.params.emulator[platform]) {
                         emulate(platform);
                     }
@@ -304,6 +309,7 @@ actions.launchRun = function(message) {
             fireEvent('runFinished');
         }
     }
+
 
     function emulate(platform) {
 
@@ -349,8 +355,6 @@ actions.launchRun = function(message) {
             }
         };
 
-
-
         var worker = utils.executeAsyncCmd(cmd);
     }
 
@@ -366,7 +370,7 @@ actions.launchRun = function(message) {
             updateStatus('device_' + platform + '_' + device.id, true);
 
             var cmd = {
-                cmd: (platform === 'android' ? 'ionic run --livereload  --device --target=' + device.id + ' android': 'ionic run --livereload --device ios'),
+                cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android': 'ionic run --livereload --device ios'),
                 path: utils.getSelectedProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
@@ -391,6 +395,61 @@ actions.launchRun = function(message) {
 
             var worker = utils.executeAsyncCmd(cmd);
         });
+    }
+
+    function checkInterface() {
+
+        var addresses = getAddresses();
+
+        if(addresses.length < 2) {
+            return;
+        }
+
+        var platformServeAddress = studio.getPreferences('mobile.platformServeAddress');
+        var path = process.env.HOME + '/.ionic/ionic.config',
+            file = File(path);
+        
+        if(file.exists) {
+            var config = JSON.parse(file.toString());
+            var address = config.platformServeAddress;
+
+            // check if address and platformServerAddress are valid
+            if(address && addresses.indexOf(address) === -1) {
+                address = null;
+            }
+            if(platformServeAddress && addresses.indexOf(platformServeAddress) === -1) {
+                platformServeAddress = null;
+            }
+
+            var validAdress = platformServeAddress || address || addresses[0];
+            if(validAdress !== platformServeAddress) {
+                studio.setPreferences('mobile.platformServeAddress', validAdress);
+            }
+
+            if(validAdress !== address) {
+                config.platformServeAddress = validAdress;
+
+                // update ionic config file
+                var blob = ( new Buffer( JSON.stringify(config, null, 2) ) ).toBlob();
+                blob.copyTo(path, 'OverWrite');               
+            }
+        }
+    }
+
+    function getAddresses() {
+
+        var interfaces = os.networkInterfaces();
+        var addresses = [];
+
+        Object.keys(interfaces).forEach(function(interface) {
+            interfaces[interface].forEach(function(cfg) {
+                if(cfg.address !== '127.0.0.1') {
+                    addresses.push(cfg.address);
+                }
+            });
+        });
+
+        return addresses;
     }
 };
 
@@ -553,6 +612,26 @@ actions.openBuildFolder = function(message) {
         path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/build/'
     });    
 };
+
+actions.updateIonicConfig = function(message) {
+    updateIonicConfig(message.params);
+};
+
+function updateIonicConfig(values) {
+    var path = process.env.HOME + '/.ionic/ionic.config',
+    file = File(path);
+
+    if(file.exists) {
+        var config = JSON.parse(file.toString());
+        Object.keys(values).forEach(function(key) {
+            config[key] = values[key];
+        });
+
+        // update ionic config file
+        var blob = ( new Buffer( JSON.stringify(config, null, 2) ) ).toBlob();
+        blob.copyTo(path, 'OverWrite');               
+    }
+}
 
 function fireEvent(eventName) {
     studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName })));
