@@ -3,7 +3,7 @@ var shell = require("shellWorker");
 
 var bash_profile = {};
 if(! os.isWindows) {
-    bash_profile.file= process.env.HOME + '/.bash_profile';
+    bash_profile.file = process.env.HOME + '/.bash_profile';
     try {
         bash_profile.exists = File(bash_profile.file).exists;
     } catch(e) {
@@ -224,14 +224,14 @@ function getConnectedDevices() {
     output;
 
     // check for the iphone device
-    /*if(! os.isWindows) {
+    if(! os.isWindows) {
         try {
             output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
             devices.ios.connected = /iPhone/.test(output);
         } catch(e) {
             studio.log(e.message);
         }
-    } */
+    }
 
     // check for the android device
     try {
@@ -245,6 +245,8 @@ function getConnectedDevices() {
                 devices.android.push({ id: match[1] });      
             }
         });
+
+        devices.android.connected = devices.android.length > 0;
     } catch(e) {
         studio.log(e.message);
     }
