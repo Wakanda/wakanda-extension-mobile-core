@@ -240,7 +240,7 @@ function getConnectedDevices() {
         var regex = /^(\w+)( |\t)+device$/;
 
         output.split(/\n|\n\r/).forEach(function(row) {
-            var match = regex.exec(row);
+            var match = regex.exec(row.trim());
             if(match) {
                 devices.android.push({ id: match[1] });      
             }
