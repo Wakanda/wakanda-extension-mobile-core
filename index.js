@@ -52,7 +52,7 @@ actions.checkDependencies = function() {
         mondatory: true
     }, {
         cmd: 'xcodebuild -version',
-        title: 'xCode',
+        title: 'Xcode',
         mondatory: false,
         os: 'mac'
     }, {
