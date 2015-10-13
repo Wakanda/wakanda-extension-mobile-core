@@ -45,7 +45,7 @@
 
         function getAddresses() {
 
-            var interfaces = os.networkInterfaces();
+            var interfaces = studio.os.networkInterfaces();
             var addresses = [];
 
             Object.keys(interfaces).forEach(function(interface) {
