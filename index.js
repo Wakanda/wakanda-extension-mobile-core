@@ -288,7 +288,8 @@ actions.launchRun = function(message) {
                     }
                 }
             };
-
+                    
+            studio.hideProgressBarOnStatusBar();
             studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
             updateStatus('addingPlatform_' + platform, true);
             utils.executeAsyncCmd(cmd); 
@@ -315,6 +316,7 @@ actions.launchRun = function(message) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
+        studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
 
         var storage = utils.getStorage('emulators');
@@ -363,6 +365,7 @@ actions.launchRun = function(message) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
+        studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
 
         devices[platform].forEach(function(device) {
@@ -540,6 +543,7 @@ actions.launchBuild = function(message) {
     function build(platform) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
+        studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Building your application for ' + platformName + '.');
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
@@ -558,7 +562,6 @@ actions.launchBuild = function(message) {
                 // enable build button when build is terminated
                 updateStatus(platform, false);
 
-             
                 // check if builded without error
                 if(msg.exitStatus === 0) {
 
@@ -599,6 +602,7 @@ actions.launchBuild = function(message) {
             }
         };
 
+        studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Adding platform ' + platform + '.');
         utils.executeAsyncCmd(cmd);   
     });
