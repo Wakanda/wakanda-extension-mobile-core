@@ -479,15 +479,6 @@ actions.stopProjectIonicSerices = function() {
     utils.setStorage({ name: 'devices', value: devices, notExtend: true });
 };
 
-actions.solutionOpenedHandler = function() {
-    "use strict";
-
-};
-
-actions.solutionClosedHandler = function() {
-    "use strict";
-};
-
 actions.getStorage = function() {
     "use strict";
 
