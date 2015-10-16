@@ -1,34 +1,11 @@
 var utils = require("./utils");
 var Base64 = require("base64");
 
-function checkProject() {
-    "use strict";
-
-    var projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath();
-
-    // if no (or more than one) project is selected
-    if(! projectName) {
-        studio.alert('You must select one and only one project in your Wakanda Solution.');
-        return false;
-    }
-
-    // test ionic project
-    var file = File(projectPath + '/ionic.project');
-    if(! file.exists) {
-        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
-        return false;
-    }
-
-    return true;
-}
-
 var actions = {};
 
 actions.initPreferences = function() {
     "use strict";
 
-    //studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
     studio.extension.registerPreferencePanel('MOBILE', 'html/mobilePreferences.html', 300);
 };
 
@@ -630,4 +607,26 @@ function updateIonicConfig(values) {
 
 function fireEvent(eventName) {
     studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName })));
+}
+
+function checkProject() {
+    "use strict";
+
+    var projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getSelectedProjectPath();
+
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
+        return false;
+    }
+
+    // test ionic project
+    var file = File(projectPath + '/ionic.project');
+    if(! file.exists) {
+        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
+        return false;
+    }
+
+    return true;
 }
