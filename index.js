@@ -581,7 +581,7 @@ actions.openBuildFolder = function(message) {
 
     utils.executeAsyncCmd({ 
         cmd: os.isWindows ? 'explorer .' : 'open .', 
-        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/build/'
+        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/'
     });    
 };
 
