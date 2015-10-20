@@ -490,7 +490,11 @@ actions.launchBuild = function(message) {
     }
 
 
-    var building = {};
+    var building = {},
+        buildingError = {
+            android: false,
+            ios: false
+        };
 
     function updateStatus(key, value) {
         building[key] = value;
@@ -503,7 +507,7 @@ actions.launchBuild = function(message) {
         if(isBuilding) {
             fireEvent('build');
         } else {
-            fireEvent('buildFinished');
+            fireEvent('buildFinished', { buildingError: buildingError.android || buildingError.ios });
         }
     }
 
@@ -513,6 +517,7 @@ actions.launchBuild = function(message) {
 
         studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Building your application for ' + platformName + '.');
+
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
             path: utils.getSelectedProjectPath(),
@@ -524,7 +529,12 @@ actions.launchBuild = function(message) {
 
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
-
+                buildingError[platform] = true;
+                utils.printConsole({ 
+                    type: 'INFO', 
+                    category: 'build',
+                    message: msg
+                });
             },
             onterminated: function(msg) {
                 // enable build button when build is terminated
@@ -532,12 +542,13 @@ actions.launchBuild = function(message) {
 
                 // check if builded without error
                 if(msg.exitStatus === 0) {
-
-                    utils.printConsole({ 
-                        type: 'INFO', 
-                        category: 'build',
-                        message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
-                    });
+                    if(! buildingError[platform]) {
+                        utils.printConsole({ 
+                            type: 'INFO', 
+                            category: 'build',
+                            message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
+                        });
+                    }
 
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Your application build is available.');
@@ -545,6 +556,7 @@ actions.launchBuild = function(message) {
                 } else {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
+                    buildingError[platform] = true;
                 }
             }
         };
@@ -605,8 +617,8 @@ function updateIonicConfig(values) {
     }
 }
 
-function fireEvent(eventName) {
-    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName })));
+function fireEvent(eventName, data) {
+    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName, data: data })));
 }
 
 function checkProject() {
