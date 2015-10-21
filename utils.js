@@ -228,6 +228,7 @@ function getConnectedDevices() {
         try {
             output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
             devices.ios.connected = /iPhone/.test(output);
+            devices.ios.push('iPhone');
         } catch(e) {
             studio.log(e.message);
         }
