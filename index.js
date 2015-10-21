@@ -320,6 +320,9 @@ actions.launchRun = function(message) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar(platformName + ' Simulator started.');
                     updateStatus('emulator_' + platform, false);
+                } else {
+                    studio.hideProgressBarOnStatusBar();
+                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
                 }
             },
             onterminated: function(msg) {
@@ -360,8 +363,10 @@ actions.launchRun = function(message) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Application started in the device ' + platformName);
                         updateStatus('device_' + platform + '_' + device.id, false);
+                    } else {
+                        studio.hideProgressBarOnStatusBar();
+                        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
                     }
-
                 },
                 onterminated: function(msg) {
                     updateStatus('device_' + platform + '_' + device.id, false);
