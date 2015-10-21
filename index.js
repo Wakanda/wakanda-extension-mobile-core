@@ -320,7 +320,7 @@ actions.launchRun = function(message) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar(platformName + ' Simulator started.');
                     updateStatus('emulator_' + platform, false);
-                } else {
+                } else if(! /Ionic server commands, enter:/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
                 }
@@ -363,7 +363,7 @@ actions.launchRun = function(message) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Application started in the device ' + platformName);
                         updateStatus('device_' + platform + '_' + device.id, false);
-                    } else {
+                    } else if(! /Ionic server commands, enter:/.test(msg)) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
                     }
