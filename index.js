@@ -551,7 +551,7 @@ actions.launchBuild = function(message) {
                     }
 
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Your application build is available.');
+                    studio.showMessageOnStatusBar('Your application build is available for ' + platformName + '.');
 
                 } else {
                     studio.hideProgressBarOnStatusBar();
