@@ -527,16 +527,25 @@ actions.launchBuild = function(message) {
             cmd: 'ionic build ' + platform + ' --release',
             path: utils.getSelectedProjectPath(),
             onmessage: function(msg) {
+
+                // check if the build is successful
+                if(platform === 'android' && /BUILD SUCCESSFUL/.test(msg)) {
+                    buildingError[platform] = false;
+                }
+
+                if(platform === 'ios' && /BUILD SUCCEEDED/.test(msg)) {
+                    buildingError[platform] = false;   
+                }
             },
             onerror: function(msg) {
                 // enable build button when build is terminated
-                updateStatus(platform, false);
+                // updateStatus(platform, false);
 
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
                 buildingError[platform] = true;
                 utils.printConsole({ 
-                    type: 'INFO', 
+                    type: 'ERROR', 
                     category: 'build',
                     message: msg
                 });
@@ -581,9 +590,9 @@ actions.launchBuild = function(message) {
                 build(platform);
             },
             onerror: function(msg) {
-                if(! /Platform (ios|android) already added/.test(msg)) {
-                    updateStatus(platform, false);
-                }
+                //if(! /Platform (ios|android) already added/.test(msg)) {
+                //    updateStatus(platform, false);                    
+                //}
             }
         };
 
