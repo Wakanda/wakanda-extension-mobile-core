@@ -3,18 +3,18 @@ var Base64 = require("base64");
 
 var actions = {};
 
+var currentOs = os.isWindows ? 'windows' : 'mac';
+
 var troubleShootingConfig = {
     node: {
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '1'
-            },
-            mac: {
-                app: 'ios-app',
-                step: '1'
-            }
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '1'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '1'
         }
     },
     cordova: {
@@ -61,6 +61,14 @@ var troubleShootingConfig = {
             step: '6'
         }
     }    
+};
+
+function getTroubleShootingLink(config) {
+    if (typeof config != 'undefined') {
+        return ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
+        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}' + config.text + '{%/a%}';
+    }
+    return '';
 }
 
 actions.initPreferences = function() {
@@ -73,8 +81,6 @@ actions.checkDependencies = function() {
     "use strict";
     
     var status = {};
-
-    var currentOs = os.isWindows ? 'windows' : 'mac';
 
     [{ 
         cmd: 'node -v',
@@ -125,11 +131,7 @@ actions.checkDependencies = function() {
             return;
         }
         
-        var troubleshootingText = '';
-        if (check.troubleshooting) {
-            troubleshootingText = ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
-            check.troubleshooting[currentOs].app + '\' , step : ' + check.troubleshooting[currentOs].step + '})))"%}' + check.troubleshooting.text + '{%/a%}';
-        }
+        var troubleshootingText = getTroubleShootingLink(check.troubleshooting);        
         
         var cmd = {
             cmd: check.cmd,
