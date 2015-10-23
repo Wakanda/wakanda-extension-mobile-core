@@ -2,6 +2,8 @@ var utils = require("./utils");
 var Base64 = require("base64");
 
 var actions = {};
+    
+var status = {};
 
 var currentOs = os.isWindows ? 'windows' : 'mac';
 
@@ -79,8 +81,6 @@ actions.initPreferences = function() {
 
 actions.checkDependencies = function() {
     "use strict";
-    
-    var status = {};
 
     [{ 
         cmd: 'node -v',
@@ -199,6 +199,14 @@ actions.launchTest = function(message) {
     if(! checkProject()) {
         return;    
     }
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
+        return;
+    }    
 
     var opt = {
         'android-ios': {
@@ -291,14 +299,6 @@ actions.launchTest = function(message) {
                     _chromeDisplay();
                 }
             },
-            onerror: function(msg) {
-                if(/command/.test(msg)) {
-                    utils.printConsole({
-                        message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
-                        type: 'ERROR'
-                    });
-                }
-            },
             onterminated: function(msg) {}
         };
 
@@ -310,6 +310,14 @@ actions.launchTest = function(message) {
 actions.launchRun = function(message) {
 
     if(! checkProject()) {
+        return;
+    }
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
         return;
     }
 
@@ -409,19 +417,11 @@ actions.launchRun = function(message) {
             },
             onterminated: function(msg) {
             },
-            onerror: function(msg) {
-                
+            onerror: function(msg) {                
                 if(! /HAX is working an/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
                     updateStatus('emulator_' + platform, false);
-                }
-                
-                if(/command/.test(msg)) {
-                    utils.printConsole({
-                        message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
-                        type: 'ERROR'
-                    });
                 }
             }
         };
@@ -577,7 +577,15 @@ actions.launchBuild = function(message) {
     if(! checkProject()) {
         return;
     }
-
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
+        return;
+    }
+    
     if(! message.params.android && ! message.params.ios) {
         studio.alert('You must select Android or iOS to launch Build.');
         return;
@@ -638,13 +646,7 @@ actions.launchBuild = function(message) {
                     category: 'build',
                     message: msg
                 });
-
-                if(/command/.test(msg)) {
-                    utils.printConsole({
-                        message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
-                        type: 'ERROR'
-                    });
-                }
+                
             },
             onterminated: function(msg) {
                 // enable build button when build is terminated
