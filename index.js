@@ -22,7 +22,8 @@ actions.checkDependencies = function() {
         mondatory: true
     }, {
         cmd: 'ionic -v',
-        title: 'Ionic'
+        title: 'Ionic',
+        mondatory: true
     }, {
         cmd: 'cordova -v',
         title: 'Cordova',
