@@ -18,45 +18,109 @@ actions.checkDependencies = function() {
 
     [{ 
         cmd: 'node -v',
-        title: 'Node',
-        mondatory: true
+        title: 'Node',        
+        mandatory: true,
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '1'
+            },
+            mac: {
+                app: 'ios-app',
+                step: '1'
+            }
+        }
     }, {
         cmd: 'ionic -v',
-        title: 'Ionic'
+        title: 'Ionic',
+        mandatory: true,
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '3'
+            },
+            mac: {
+                app: 'ios-app',
+                step: '3'
+            }
+        }
     }, {
         cmd: 'cordova -v',
         title: 'Cordova',
-        mondatory: true
+        mandatory: true,
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '2'
+            },
+            mac: {
+                app: 'ios-app',
+                step: '2'
+            }
+        }
     }, {
         cmd: 'xcodebuild -version',
         title: 'Xcode',
-        mondatory: false,
+        mandatory: false,
         os: 'mac'
     }, {
         cmd: 'adb version',
         title: 'Android SDK',
-        mondatory: false
+        mandatory: false,
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '6'
+            },
+            mac: {
+                app: 'android-app',
+                step: '6'
+            }
+        }
     }, {
         cmd: 'echo %JAVA_HOME%',
-        title: 'Environnement variable JAVA_HOME',
+        title: 'Environment variable JAVA_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%JAVA_HOME%';
         },
-        mondatory: true,
-        os: 'windows'
-
+        mandatory: true,
+        os: 'windows',
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '4'
+            }
+        }
     }, {
         cmd: 'echo %ANDROID_HOME%',
-        title: 'Environnement variable ANDROID_HOME',
+        title: 'Environment variable ANDROID_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%ANDROID_HOME%';
         },
-        mondatory: true,
-        os: 'windows'
+        mandatory: true,
+        os: 'windows',
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '6'
+            }
+        }
     }].forEach(function(check) {
 
         if(check.os && check.os !== currentOs) {
             return;
+        }
+        
+        var troubleshootingText = '';
+        if (check.troubleshooting) {
+            troubleshootingText = ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
+            check.troubleshooting[currentOs].app + '\' , step : ' + check.troubleshooting[currentOs].step + '})))"%}' + check.troubleshooting.text + '{%/a%}';
         }
         
         var cmd = {
@@ -74,11 +138,11 @@ actions.checkDependencies = function() {
                     });
                 } else {
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
-                        type: check.mondatory ? 'ERROR' : 'WARNING' 
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
+                        type: check.mandatory ? 'ERROR' : 'WARNING' 
                     });
                 }
-
+                
             },
             onerror: function(msg) {
                 status[check.title] = false;
@@ -86,7 +150,7 @@ actions.checkDependencies = function() {
                 utils.setStorage({ name: 'checks', value: status });
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                    message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
                     type: 'ERROR'
                 });
 
@@ -98,7 +162,7 @@ actions.checkDependencies = function() {
                     utils.setStorage({ name: 'checks', value: status });
 
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
                         type: 'WARNING'
                     });
                 }
