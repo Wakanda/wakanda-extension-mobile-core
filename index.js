@@ -19,40 +19,40 @@ actions.checkDependencies = function() {
     [{ 
         cmd: 'node -v',
         title: 'Node',
-        mondatory: true
+        mandatory: true
     }, {
         cmd: 'ionic -v',
         title: 'Ionic',
-        mondatory: true
+        mandatory: true
     }, {
         cmd: 'cordova -v',
         title: 'Cordova',
-        mondatory: true
+        mandatory: true
     }, {
         cmd: 'xcodebuild -version',
         title: 'Xcode',
-        mondatory: false,
+        mandatory: false,
         os: 'mac'
     }, {
         cmd: 'adb version',
         title: 'Android SDK',
-        mondatory: false
+        mandatory: false
     }, {
         cmd: 'echo %JAVA_HOME%',
-        title: 'Environnement variable JAVA_HOME',
+        title: 'Environment variable JAVA_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%JAVA_HOME%';
         },
-        mondatory: true,
+        mandatory: true,
         os: 'windows'
 
     }, {
         cmd: 'echo %ANDROID_HOME%',
-        title: 'Environnement variable ANDROID_HOME',
+        title: 'Environment variable ANDROID_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%ANDROID_HOME%';
         },
-        mondatory: true,
+        mandatory: true,
         os: 'windows'
     }].forEach(function(check) {
 
@@ -75,8 +75,8 @@ actions.checkDependencies = function() {
                     });
                 } else {
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
-                        type: check.mondatory ? 'ERROR' : 'WARNING' 
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                        type: check.mandatory ? 'ERROR' : 'WARNING' 
                     });
                 }
 
@@ -87,7 +87,7 @@ actions.checkDependencies = function() {
                 utils.setStorage({ name: 'checks', value: status });
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                    message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
                     type: 'ERROR'
                 });
 
@@ -99,7 +99,7 @@ actions.checkDependencies = function() {
                     utils.setStorage({ name: 'checks', value: status });
 
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
                         type: 'WARNING'
                     });
                 }
