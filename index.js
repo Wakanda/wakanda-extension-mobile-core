@@ -3,6 +3,66 @@ var Base64 = require("base64");
 
 var actions = {};
 
+var troubleShootingConfig = {
+    node: {
+        troubleshooting: {
+            text: 'click here to discover more',      
+            windows: {
+                app: 'android-app',
+                step: '1'
+            },
+            mac: {
+                app: 'ios-app',
+                step: '1'
+            }
+        }
+    },
+    cordova: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '2'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '2'
+        }
+    },
+    ionic: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '3'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '3'
+        }
+    },
+    java: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '4'
+        },
+        mac: {
+            app: 'android-app',
+            step: '4'
+        }
+    } ,
+    android: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '6'
+        },
+        mac: {
+            app: 'android-app',
+            step: '6'
+        }
+    }    
+}
+
 actions.initPreferences = function() {
     "use strict";
 
@@ -20,47 +80,17 @@ actions.checkDependencies = function() {
         cmd: 'node -v',
         title: 'Node',        
         mandatory: true,
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '1'
-            },
-            mac: {
-                app: 'ios-app',
-                step: '1'
-            }
-        }
+        troubleshooting: troubleShootingConfig.node        
     }, {
         cmd: 'ionic -v',
         title: 'Ionic',
         mandatory: true,
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '3'
-            },
-            mac: {
-                app: 'ios-app',
-                step: '3'
-            }
-        }
+        troubleshooting: troubleShootingConfig.ionic
     }, {
         cmd: 'cordova -v',
         title: 'Cordova',
         mandatory: true,
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '2'
-            },
-            mac: {
-                app: 'ios-app',
-                step: '2'
-            }
-        }
+        troubleshooting: troubleShootingConfig.cordova
     }, {
         cmd: 'xcodebuild -version',
         title: 'Xcode',
@@ -70,17 +100,7 @@ actions.checkDependencies = function() {
         cmd: 'adb version',
         title: 'Android SDK',
         mandatory: false,
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '6'
-            },
-            mac: {
-                app: 'android-app',
-                step: '6'
-            }
-        }
+        troubleshooting: troubleShootingConfig.android
     }, {
         cmd: 'echo %JAVA_HOME%',
         title: 'Environment variable JAVA_HOME',
@@ -89,13 +109,7 @@ actions.checkDependencies = function() {
         },
         mandatory: true,
         os: 'windows',
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '4'
-            }
-        }
+        troubleshooting: troubleShootingConfig.java
     }, {
         cmd: 'echo %ANDROID_HOME%',
         title: 'Environment variable ANDROID_HOME',
@@ -104,13 +118,7 @@ actions.checkDependencies = function() {
         },
         mandatory: true,
         os: 'windows',
-        troubleshooting: {
-            text: 'click here to discover more',      
-            windows: {
-                app: 'android-app',
-                step: '6'
-            }
-        }
+        troubleshooting: troubleShootingConfig.android
     }].forEach(function(check) {
 
         if(check.os && check.os !== currentOs) {
