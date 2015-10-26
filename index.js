@@ -297,7 +297,7 @@ actions.launchTest = function(message) {
 
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save the pid of the process    
                 utils.setStorage({ name: 'services', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
@@ -351,7 +351,7 @@ actions.launchRun = function(message) {
             // and when terminated, launch emulate
             var cmd = {
                 cmd: 'ionic platform add ' + platform,
-                path: utils.getSelectedProjectPath(),
+                path: utils.getMobileProjectPath(),
                 onterminated: function(msg) {
 
                     updateStatus('addingPlatform_' + platform, false);
@@ -445,7 +445,7 @@ actions.launchRun = function(message) {
 
         var cmd = {
             cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
                 utils.setStorage({ name: 'emulators', key: platform, value: {  pid: worker._systemWorker.getInfos().pid } });
@@ -489,7 +489,7 @@ actions.launchRun = function(message) {
 
             var cmd = {
                 cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android': 'ionic run --livereload --device ios'),
-                path: utils.getSelectedProjectPath(),
+                path: utils.getMobileProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
 
@@ -676,7 +676,7 @@ actions.launchBuild = function(message) {
 
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
 
                 // check if the build is successful
@@ -732,7 +732,7 @@ actions.launchBuild = function(message) {
         updateStatus(platform, true);
         var cmd = {
             cmd: 'ionic platform add ' + platform,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 build(platform);
             },
@@ -759,7 +759,7 @@ actions.openBuildFolder = function(message) {
 
     utils.executeAsyncCmd({ 
         cmd: os.isWindows ? 'explorer .' : 'open .', 
-        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/'
+        path: message.params.platform === 'android' ? utils.getMobileProjectPath() + '/platforms/android/build/outputs/apk' : utils.getMobileProjectPath() + '/platforms/ios/'
     });    
 };
 
@@ -791,7 +791,7 @@ function checkProject() {
     "use strict";
 
     var projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath();
+        projectPath = utils.getMobileProjectPath();
 
     // if no (or more than one) project is selected
     if(! projectName) {
