@@ -634,10 +634,7 @@ actions.launchBuild = function(message) {
                     buildingError[platform] = false;   
                 }
             },
-            onerror: function(msg) {
-                // enable build button when build is terminated
-                // updateStatus(platform, false);
-                
+            onerror: function(msg) {                
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
                 buildingError[platform] = true;
@@ -649,9 +646,6 @@ actions.launchBuild = function(message) {
                 
             },
             onterminated: function(msg) {
-                // enable build button when build is terminated
-                updateStatus(platform, false);
-
                 // check if builded without error
                 if(msg.exitStatus === 0) {
                     if(! buildingError[platform]) {
@@ -660,16 +654,17 @@ actions.launchBuild = function(message) {
                             category: 'build',
                             message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
                         });
+                        studio.hideProgressBarOnStatusBar();
+                        studio.showMessageOnStatusBar('Your application build is available for ' + platformName + '.');
                     }
-
-                    studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Your application build is available for ' + platformName + '.');
-
                 } else {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
                     buildingError[platform] = true;
                 }
+
+                // enable build button when build is terminated
+                updateStatus(platform, false);
             }
         };
         utils.executeAsyncCmd(cmd);   
@@ -688,9 +683,14 @@ actions.launchBuild = function(message) {
                 build(platform);
             },
             onerror: function(msg) {
-                //if(! /Platform (ios|android) already added/.test(msg)) {
-                //    updateStatus(platform, false);                    
-                //}
+                if(! /Platform (ios|android) already added/.test(msg)) {
+                    //updateStatus(platform, false);
+                    utils.printConsole({ 
+                        type: 'ERROR', 
+                        category: 'build',
+                        message: msg
+                    });
+                }
             }
         };
 
