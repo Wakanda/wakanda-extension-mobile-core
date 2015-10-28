@@ -21,22 +21,7 @@
                 "trigger": [
                     { "event": "onStudioStart" }
                 ]
-            },
-            {
-                "name": "solutionOpenedHandler",
-                "title": "handle solution open event",
-                "trigger": [
-                    { "event": "onSolutionOpened" }
-                ]
-            },
-            {
-                "name": "solutionClosedHandler",
-                "title": "handle solution close event",
-                "trigger": [
-                    { "event": "onSolutionClosed" }
-                ]
             }
-
         ],
         "lifetime": "application_lifetime"
     }

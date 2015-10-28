@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="/Web Components/common/styles/preferences.css">
+</head>
+<body>
+
+	<div class="panel wakanda-preferences">
+		<ul>
+			<li>
+				<label for="platformServeAddress" class="padding-left">Ionic platformServeAddress</label>
+				<select name="platformServeAddress" class="large">
+				</select>
+			</li>
+		</ul>
+	</div>
+
+	<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', function(e) {
+            var addresses = getAddresses();
+
+          	var select = document.getElementsByName('platformServeAddress')[0],
+				html = '',
+				selectedAddress = studio.getPreferences('mobile.platformServeAddress');
+
+			addresses.forEach(function(address) {
+				html += '<option value="' + address + '">' + address + '</option>';
+			});
+
+			select.innerHTML = html;
+
+			select.addEventListener('change', function(e) {
+				studio.setPreferences('mobile.platformServeAddress', select.value);
+				studio.sendCommand('wakanda-extension-mobile-core.updateIonicConfig.' + btoa(JSON.stringify({ platformServeAddress: select.value })));
+			});
+
+			if(selectedAddress && addresses.indexOf(selectedAddress) !== -1) {
+				select.value = selectedAddress;
+			} else {
+				studio.setPreferences('mobile.platformServeAddress', select.value);
+			}
+			studio.sendCommand('wakanda-extension-mobile-core.updateIonicConfig.' + btoa(JSON.stringify({ platformServeAddress: select.value })));			
+		});
+
+        function getAddresses() {
+
+            var interfaces = studio.os.networkInterfaces();
+            var addresses = [];
+
+            Object.keys(interfaces).forEach(function(interface) {
+                interfaces[interface].forEach(function(cfg) {
+                    if(cfg.address !== '127.0.0.1') {
+                        addresses.push(cfg.address);
+                    }
+                });
+            });
+
+            return addresses;
+        }
+	</script>
+</body>
+</html>

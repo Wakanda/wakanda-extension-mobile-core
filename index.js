@@ -1,84 +1,137 @@
 var utils = require("./utils");
 var Base64 = require("base64");
 
-function checkProject() {
-    "use strict";
-
-    var projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath();
-
-    // if no (or more than one) project is selected
-    if(! projectName) {
-        studio.alert('You must select one and only one project in your Wakanda Solution.');
-        return false;
-    }
-
-    // test ionic project
-    var file = File(projectPath + '/ionic.project');
-    if(! file.exists) {
-        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
-        return false;
-    }
-
-    return true;
-}
-
 var actions = {};
+    
+var status = {};
+
+var currentOs = os.isWindows ? 'windows' : 'mac';
+
+var troubleShootingConfig = {
+    node: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '1'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '1'
+        }
+    },
+    cordova: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '2'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '2'
+        }
+    },
+    ionic: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '3'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '3'
+        }
+    },
+    java: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '4'
+        },
+        mac: {
+            app: 'android-app',
+            step: '4'
+        }
+    } ,
+    android: {
+        text: 'click here to discover more',      
+        windows: {
+            app: 'android-app',
+            step: '6'
+        },
+        mac: {
+            app: 'android-app',
+            step: '6'
+        }
+    }    
+};
+
+function getTroubleShootingLink(config) {
+    if (typeof config != 'undefined') {
+        return ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
+        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}' + config.text + '{%/a%}';
+    }
+    return '';
+}
 
 actions.initPreferences = function() {
     "use strict";
-    studio.extension.registerPreferencePanel('Mobile', 'preferences.json');
+
+    studio.extension.registerPreferencePanel('MOBILE', 'html/mobilePreferences.html', 300);
 };
 
 actions.checkDependencies = function() {
     "use strict";
-    
-    var status = {};
-
-    var currentOs = os.isWindows ? 'windows' : 'mac';
 
     [{ 
         cmd: 'node -v',
-        title: 'Node',
-        mondatory: true
+        title: 'Node',        
+        mandatory: true,
+        troubleshooting: troubleShootingConfig.node        
     }, {
         cmd: 'ionic -v',
-        title: 'Ionic'
+        title: 'Ionic',
+        mandatory: true,
+        troubleshooting: troubleShootingConfig.ionic
     }, {
         cmd: 'cordova -v',
         title: 'Cordova',
-        mondatory: true
+        mandatory: true,
+        troubleshooting: troubleShootingConfig.cordova
     }, {
         cmd: 'xcodebuild -version',
-        title: 'xCode',
-        mondatory: false,
+        title: 'Xcode',
+        mandatory: false,
         os: 'mac'
     }, {
         cmd: 'adb version',
         title: 'Android SDK',
-        mondatory: false
+        mandatory: false,
+        troubleshooting: troubleShootingConfig.android
     }, {
         cmd: 'echo %JAVA_HOME%',
-        title: 'Environnement variable JAVA_HOME',
+        title: 'Environment variable JAVA_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%JAVA_HOME%';
         },
-        mondatory: true,
-        os: 'windows'
-
+        mandatory: true,
+        os: 'windows',
+        troubleshooting: troubleShootingConfig.java
     }, {
         cmd: 'echo %ANDROID_HOME%',
-        title: 'Environnement variable ANDROID_HOME',
+        title: 'Environment variable ANDROID_HOME',
         validationCallback: function(msg) {
             return msg && msg.replace(/\r?\n|\r/gm, '').trim() !== '%ANDROID_HOME%';
         },
-        mondatory: true,
-        os: 'windows'
+        mandatory: true,
+        os: 'windows',
+        troubleshooting: troubleShootingConfig.android
     }].forEach(function(check) {
 
         if(check.os && check.os !== currentOs) {
             return;
         }
+        
+        var troubleshootingText = getTroubleShootingLink(check.troubleshooting);        
         
         var cmd = {
             cmd: check.cmd,
@@ -95,11 +148,11 @@ actions.checkDependencies = function() {
                     });
                 } else {
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
-                        type: check.mondatory ? 'ERROR' : 'WARNING' 
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
+                        type: check.mandatory ? 'ERROR' : 'WARNING' 
                     });
                 }
-
+                
             },
             onerror: function(msg) {
                 status[check.title] = false;
@@ -107,7 +160,7 @@ actions.checkDependencies = function() {
                 utils.setStorage({ name: 'checks', value: status });
 
                 utils.printConsole({
-                    message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                    message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
                     type: 'ERROR'
                 });
 
@@ -119,7 +172,7 @@ actions.checkDependencies = function() {
                     utils.setStorage({ name: 'checks', value: status });
 
                     utils.printConsole({
-                        message: check.title + ': {%span class="' + (check.mondatory ? 'red' : 'orange') + '"%}Not found{%/span%}',
+                        message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
                         type: 'WARNING'
                     });
                 }
@@ -146,6 +199,14 @@ actions.launchTest = function(message) {
     if(! checkProject()) {
         return;    
     }
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
+        return;
+    }    
 
     var opt = {
         'android-ios': {
@@ -251,6 +312,14 @@ actions.launchRun = function(message) {
     if(! checkProject()) {
         return;
     }
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
+        return;
+    }
 
     if(! message.params.emulator.android && ! message.params.emulator.ios && ! message.params.device.android && ! message.params.device.ios) {
         studio.alert('You must select an emulator or a device to run your application.');
@@ -271,7 +340,11 @@ actions.launchRun = function(message) {
 
                     updateStatus('addingPlatform_' + platform, false);
 
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
+
+                    // check network interfaces and set ionic config to right address if necessary
+                    checkInterface();
 
                     if(message.params.emulator[platform]) {
                         emulate(platform);
@@ -282,8 +355,9 @@ actions.launchRun = function(message) {
                     }
                 }
             };
-
-            studio.showMessageOnStatusBar('Ionic adding platform ' + platform + '...');
+                    
+            studio.hideProgressBarOnStatusBar();
+            studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
             updateStatus('addingPlatform_' + platform, true);
             utils.executeAsyncCmd(cmd); 
         }
@@ -304,11 +378,13 @@ actions.launchRun = function(message) {
         }
     }
 
+
     function emulate(platform) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
 
         var storage = utils.getStorage('emulators');
 
@@ -331,22 +407,24 @@ actions.launchRun = function(message) {
                 // test if emulator is started
                 var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                 if(started) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar(platformName + ' Simulator started.');
                     updateStatus('emulator_' + platform, false);
+                } else if(! /Ionic server commands, enter:/.test(msg)) {
+                    studio.hideProgressBarOnStatusBar();
+                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
                 }
             },
             onterminated: function(msg) {
             },
-            onerror: function(msg) {
+            onerror: function(msg) {                
                 if(! /HAX is working an/.test(msg)) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
                     updateStatus('emulator_' + platform, false);
-                   
                 }
             }
         };
-
-
 
         var worker = utils.executeAsyncCmd(cmd);
     }
@@ -356,29 +434,34 @@ actions.launchRun = function(message) {
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Launching your application on ' + platformName + ' device.');
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
 
         devices[platform].forEach(function(device) {
 
             updateStatus('device_' + platform + '_' + device.id, true);
 
             var cmd = {
-                cmd: (platform === 'android' ? 'ionic run --livereload  --device --target=' + device.id + ' android': 'ionic run ios'),
+                cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android': 'ionic run --livereload --device ios'),
                 path: utils.getSelectedProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
 
                     var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                     if(started) {
+                        studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Application started in the device ' + platformName);
                         updateStatus('device_' + platform + '_' + device.id, false);
+                    } else if(! /Ionic server commands, enter:/.test(msg)) {
+                        studio.hideProgressBarOnStatusBar();
+                        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
                     }
-
                 },
                 onterminated: function(msg) {
                     updateStatus('device_' + platform + '_' + device.id, false);
                 },
                 onerror: function(msg) {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + device.id);
                     updateStatus('device_' + platform + '_' + device.id, false);
                 }
@@ -386,6 +469,61 @@ actions.launchRun = function(message) {
 
             var worker = utils.executeAsyncCmd(cmd);
         });
+    }
+
+    function checkInterface() {
+
+        var addresses = getAddresses();
+
+        if(addresses.length < 2) {
+            return;
+        }
+
+        var platformServeAddress = studio.getPreferences('mobile.platformServeAddress');
+        var path = process.env.HOME + '/.ionic/ionic.config',
+            file = File(path);
+        
+        if(file.exists) {
+            var config = JSON.parse(file.toString());
+            var address = config.platformServeAddress;
+
+            // check if address and platformServerAddress are valid
+            if(address && addresses.indexOf(address) === -1) {
+                address = null;
+            }
+            if(platformServeAddress && addresses.indexOf(platformServeAddress) === -1) {
+                platformServeAddress = null;
+            }
+
+            var validAdress = platformServeAddress || address || addresses[0];
+            if(validAdress !== platformServeAddress) {
+                studio.setPreferences('mobile.platformServeAddress', validAdress);
+            }
+
+            if(validAdress !== address) {
+                config.platformServeAddress = validAdress;
+
+                // update ionic config file
+                var blob = ( new Buffer( JSON.stringify(config, null, 2) ) ).toBlob();
+                blob.copyTo(path, 'OverWrite');               
+            }
+        }
+    }
+
+    function getAddresses() {
+
+        var interfaces = os.networkInterfaces();
+        var addresses = [];
+
+        Object.keys(interfaces).forEach(function(interface) {
+            interfaces[interface].forEach(function(cfg) {
+                if(cfg.address !== '127.0.0.1') {
+                    addresses.push(cfg.address);
+                }
+            });
+        });
+
+        return addresses;
     }
 };
 
@@ -410,15 +548,6 @@ actions.stopProjectIonicSerices = function() {
     utils.setStorage({ name: 'services', value: services, notExtend: true });
     utils.setStorage({ name: 'emulators', value: emulators, notExtend: true });
     utils.setStorage({ name: 'devices', value: devices, notExtend: true });
-};
-
-actions.solutionOpenedHandler = function() {
-    "use strict";
-
-};
-
-actions.solutionClosedHandler = function() {
-    "use strict";
 };
 
 actions.getStorage = function() {
@@ -448,14 +577,26 @@ actions.launchBuild = function(message) {
     if(! checkProject()) {
         return;
     }
-
+    
+    if(! status['Ionic']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
+            type: 'ERROR'
+        });
+        return;
+    }
+    
     if(! message.params.android && ! message.params.ios) {
         studio.alert('You must select Android or iOS to launch Build.');
         return;
     }
 
 
-    var building = {};
+    var building = {},
+        buildingError = {
+            android: false,
+            ios: false
+        };
 
     function updateStatus(key, value) {
         building[key] = value;
@@ -468,7 +609,7 @@ actions.launchBuild = function(message) {
         if(isBuilding) {
             fireEvent('build');
         } else {
-            fireEvent('buildFinished');
+            fireEvent('buildFinished', { buildingError: buildingError.android || buildingError.ios });
         }
     }
 
@@ -476,38 +617,54 @@ actions.launchBuild = function(message) {
     function build(platform) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
-        studio.showMessageOnStatusBar('Building your application for ' + platformName + '.');
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Building your application for ' + platformName + '.');
+
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
             path: utils.getSelectedProjectPath(),
             onmessage: function(msg) {
+
+                // check if the build is successful
+                if(platform === 'android' && /BUILD SUCCESSFUL/.test(msg)) {
+                    buildingError[platform] = false;
+                }
+
+                if(platform === 'ios' && /BUILD SUCCEEDED/.test(msg)) {
+                    buildingError[platform] = false;   
+                }
             },
-            onerror: function(msg) {
-                // enable build button when build is terminated
-                updateStatus(platform, false);
-
+            onerror: function(msg) {                
+                studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
-
+                buildingError[platform] = true;
+                utils.printConsole({ 
+                    type: 'ERROR', 
+                    category: 'build',
+                    message: msg
+                });
+                
             },
             onterminated: function(msg) {
-                // enable build button when build is terminated
-                updateStatus(platform, false);
-
-             
                 // check if builded without error
                 if(msg.exitStatus === 0) {
-
-                    utils.printConsole({ 
-                        type: 'INFO', 
-                        category: 'build',
-                        message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
-                    });
-
-                    studio.showMessageOnStatusBar('Your application build is available.');
-
+                    if(! buildingError[platform]) {
+                        utils.printConsole({ 
+                            type: 'INFO', 
+                            category: 'build',
+                            message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
+                        });
+                        studio.hideProgressBarOnStatusBar();
+                        studio.showMessageOnStatusBar('Your application build is available for ' + platformName + '.');
+                    }
                 } else {
+                    studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
+                    buildingError[platform] = true;
                 }
+
+                // enable build button when build is terminated
+                updateStatus(platform, false);
             }
         };
         utils.executeAsyncCmd(cmd);   
@@ -527,12 +684,18 @@ actions.launchBuild = function(message) {
             },
             onerror: function(msg) {
                 if(! /Platform (ios|android) already added/.test(msg)) {
-                    updateStatus(platform, false);
+                    //updateStatus(platform, false);
+                    utils.printConsole({ 
+                        type: 'ERROR', 
+                        category: 'build',
+                        message: msg
+                    });
                 }
             }
         };
 
-        studio.showMessageOnStatusBar('Adding platform ' + platform + '.');
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Adding platform ' + platform + '.');
         utils.executeAsyncCmd(cmd);   
     });
 };
@@ -542,10 +705,52 @@ actions.openBuildFolder = function(message) {
 
     utils.executeAsyncCmd({ 
         cmd: os.isWindows ? 'explorer .' : 'open .', 
-        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/build/'
+        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/'
     });    
 };
 
-function fireEvent(eventName) {
-    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName })));
+actions.updateIonicConfig = function(message) {
+    updateIonicConfig(message.params);
+};
+
+function updateIonicConfig(values) {
+    var path = process.env.HOME + '/.ionic/ionic.config',
+    file = File(path);
+
+    if(file.exists) {
+        var config = JSON.parse(file.toString());
+        Object.keys(values).forEach(function(key) {
+            config[key] = values[key];
+        });
+
+        // update ionic config file
+        var blob = ( new Buffer( JSON.stringify(config, null, 2) ) ).toBlob();
+        blob.copyTo(path, 'OverWrite');               
+    }
+}
+
+function fireEvent(eventName, data) {
+    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName, data: data })));
+}
+
+function checkProject() {
+    "use strict";
+
+    var projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getSelectedProjectPath();
+
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
+        return false;
+    }
+
+    // test ionic project
+    var file = File(projectPath + '/ionic.project');
+    if(! file.exists) {
+        studio.alert('Your project ' + projectName + ' is not a mobile project, please select a mobile project.');
+        return false;
+    }
+
+    return true;
 }
