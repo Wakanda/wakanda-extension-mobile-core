@@ -8,6 +8,17 @@ var status = {};
 var currentOs = os.isWindows ? 'windows' : 'mac';
 
 var troubleShootingConfig = {
+    xcode: {
+        text: 'click here to discover more',
+        windows: {
+            app: 'ios-app',
+            step: '1'
+        },
+        mac: {
+            app: 'ios-app',
+            step: '1'
+        }
+    },
     node: {
         text: 'click here to discover more',      
         windows: {
@@ -101,7 +112,8 @@ actions.checkDependencies = function() {
         cmd: 'xcodebuild -version',
         title: 'Xcode',
         mandatory: false,
-        os: 'mac'
+        os: 'mac',
+        troubleshooting: troubleShootingConfig.xcode
     }, {
         cmd: 'adb version',
         title: 'Android SDK',
