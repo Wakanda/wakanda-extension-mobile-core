@@ -7,6 +7,23 @@ var status = {};
 
 var currentOs = os.isWindows ? 'windows' : 'mac';
 
+var GULP_INSTALLED = false;
+
+utils.executeAsyncCmd({
+    cmd: 'gulp -v',
+    options: {
+        consoleSilentMode: true
+    },
+    onmessage: function(msg) {
+        GULP_INSTALLED = true;
+    },
+    onerror: function(msg) {
+        GULP_INSTALLED= false;
+    }
+});
+
+
+
 var troubleShootingConfig = {
     xcode: {
         text: 'Install Xcode',
@@ -766,6 +783,102 @@ actions.openBuildFolder = function(message) {
 actions.updateIonicConfig = function(message) {
     updateIonicConfig(message.params);
 };
+
+actions.launchWebPreview = function(message) {
+    var config = message.params,
+        projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getWebProjectPath();
+ 
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
+        return false;
+    }
+
+    // test if web project is not empty
+    var file = File(projectPath + '/app/index.html');
+    if(! file.exists) {
+        studio.alert('The structure of your web project is not valid, there is not app/index.html file !');
+        return false;
+    }
+
+    // check if server is connected, else start it
+    var serverStatus = studio.isCommandChecked('startWakandaServer');
+    if(serverStatus) {
+        webPreview(config.webStudioPreview);
+    } else {
+        utils.setStorage({ 
+            name: 'waitingServerConnect', 
+            value: { 
+                waiting: true, 
+                webStudioPreview: config.webStudioPreview,
+                dateTime: new Date().getTime()
+            }
+        });
+
+        fireEvent('webRunWaitConnectToServer');
+        studio.sendCommand('StartWakandaServer');
+    }
+};
+
+actions.handleServerConnect = function(message) {
+    var storage = utils.getStorage('waitingServerConnect'),
+        timeout = 2; // timeout is in seconds unit
+
+    if(! storage.waiting) {
+        return;
+    }
+
+    fireEvent('webRunConnectedToServer');
+
+    utils.setStorage('waitingServerConnect', { waiting: false });
+
+    // if server is not launched after 2 minutes, do nothing !
+    if(new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
+        utils.printConsole({
+            type: 'ERROR',
+            message: 'Wainting to connect to solution server exceed ' + timeout + ' seconds, Running web action is canceled.'
+        });
+        return;
+    }
+  
+    webPreview(storage.webStudioPreview);
+};
+
+function webPreview(webStudioPreview) {
+
+    var projectPath = utils.getWebProjectPath(),
+        url;
+
+    // check if to use gulp is installed and configured for this web project
+    // else, open only index.html
+    if(!GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/node_modules/gulp/package.json').exists) {
+        url = 'http://127.0.0.1:8081/app/index.html';
+        _display();
+    } else {
+        // launch livereload using node
+        url = 'http://127.0.0.1:8000/';
+        var command = {
+            cmd: 'gulp serve',
+            path: projectPath,
+            onmessage: function(msg) {
+                _display();
+            }
+        };
+        utils.executeAsyncCmd(command);
+    }
+
+    function _display() {
+        if(webStudioPreview) {
+            studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
+            studio.extension.openPageInTab(url, 'Web App');
+        } else {
+            utils.executeAsyncCmd({
+                cmd: os.isWindows ? 'start chrome ' + url : "open -a 'Google Chrome' " + url
+            });
+        }
+    }
+}
 
 function updateIonicConfig(values) {
     var path = process.env.HOME + '/.ionic/ionic.config',
