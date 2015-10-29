@@ -9,62 +9,58 @@ var currentOs = os.isWindows ? 'windows' : 'mac';
 
 var troubleShootingConfig = {
     xcode: {
-        text: 'click here to discover more',
-        windows: {
-            app: 'ios-app',
-            step: '1'
-        },
+        text: 'Install Xcode',
         mac: {
             app: 'ios-app',
             step: '1'
         }
     },
     node: {
-        text: 'click here to discover more',      
+        text: 'Install Node.JS',      
         windows: {
             app: 'android-app',
             step: '1'
         },
         mac: {
             app: 'ios-app',
-            step: '1'
+            step: '2'
         }
     },
     cordova: {
-        text: 'click here to discover more',      
+        text: 'Install Cordova',      
         windows: {
             app: 'android-app',
             step: '2'
         },
         mac: {
             app: 'ios-app',
-            step: '2'
+            step: '3'
         }
     },
     ionic: {
-        text: 'click here to discover more',      
+        text: 'Install Ionic',      
         windows: {
             app: 'android-app',
             step: '3'
         },
         mac: {
             app: 'ios-app',
-            step: '3'
+            step: '4'
         }
     },
     java: {
-        text: 'click here to discover more',      
+        text: 'Install Java SDK',      
         windows: {
             app: 'android-app',
             step: '4'
         },
         mac: {
             app: 'android-app',
-            step: '4'
+            step: '5'
         }
     } ,
     android: {
-        text: 'click here to discover more',      
+        text: 'Install Android SDK',      
         windows: {
             app: 'android-app',
             step: '6'
@@ -78,8 +74,8 @@ var troubleShootingConfig = {
 
 function getTroubleShootingLink(config) {
     if (typeof config != 'undefined') {
-        return ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
-        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}' + config.text + '{%/a%}';
+        return ' - ' + config.text + ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
+        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}»{%/a%}';
     }
     return '';
 }

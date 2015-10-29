@@ -5,6 +5,7 @@
         "version": "1.0.0",
         "description": "Extesion for Mobile Ionic environnement",
         "icon": "icon.png",
+        "senders" : [],
         "actions": [
             {
                 "name": "initPreferences",
