@@ -407,7 +407,7 @@ actions.launchRun = function(message) {
         // adding whilelist plugins
         var cmd = {
             cmd: 'ionic plugin add ' + plugin.url,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 updateStatus('addingPlugin_' + plugin.pluginName, false);
 
@@ -589,7 +589,6 @@ actions.launchRun = function(message) {
         return addresses;
     }
 };
-
 actions.stopProjectIonicSerices = function() {
     "use strict";
 
