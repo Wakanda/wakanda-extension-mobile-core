@@ -74,8 +74,8 @@ var troubleShootingConfig = {
 
 function getTroubleShootingLink(config) {
     if (typeof config != 'undefined') {
-        return ' - ' + config.text + ' {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
-        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}»{%/a%}';
+        return ' - {%a href="#" class="tip" onclick="studio.sendCommand(\'wakanda-extension-trouble-shooting.goToTroubleShootingStep.\'+btoa(JSON.stringify({nickname : \'' +
+        config[currentOs].app + '\' , step : ' + config[currentOs].step + '})))"%}' + config.text + ' {%i%}»{%/i%}{%/a%}';
     }
     return '';
 }
