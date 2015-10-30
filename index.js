@@ -320,7 +320,15 @@ actions.launchRun = function(message) {
     if(! checkProject()) {
         return;
     }
-    
+
+    if(currentOs == 'windows' && ! status['Android SDK']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Android SDK dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.android),
+            type: 'ERROR'
+        });
+        return;
+    }
+
     if(! status['Ionic']) {
         utils.printConsole({
             message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
@@ -585,7 +593,15 @@ actions.launchBuild = function(message) {
     if(! checkProject()) {
         return;
     }
-    
+        
+    if(currentOs == 'windows' && ! status['Android SDK']) {
+        utils.printConsole({
+            message: '{%span class="red"%}Android SDK dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.android),
+            type: 'ERROR'
+        });
+        return;
+    }
+
     if(! status['Ionic']) {
         utils.printConsole({
             message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
