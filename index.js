@@ -320,7 +320,7 @@ actions.launchRun = function(message) {
     if(! checkProject()) {
         return;
     }
-
+    
     if(currentOs == 'windows' && ! status['Android SDK']) {
         utils.printConsole({
             message: '{%span class="red"%}Android SDK dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.android),
@@ -362,13 +362,20 @@ actions.launchRun = function(message) {
                     // check network interfaces and set ionic config to right address if necessary
                     checkInterface();
 
-                    if(message.params.emulator[platform]) {
-                        emulate(platform);
-                    }
+                    // add plugins and launch run or emulate
+                    addPlugins({ 
+                        pluginName: 'whitelist',
+                        url: 'https://github.com/apache/cordova-plugin-whitelist.git',
+                        onterminated: function() {
+                            if(message.params.emulator[platform]) {
+                                emulate(platform);
+                            }
 
-                    if(message.params.device[platform]) {
-                        run(platform);
-                    }
+                            if(message.params.device[platform]) {
+                                run(platform);
+                            }
+                        }
+                    });
                 }
             };
                     
@@ -378,6 +385,29 @@ actions.launchRun = function(message) {
             utils.executeAsyncCmd(cmd); 
         }
     });
+
+    function addPlugins(plugin) {
+        // adding whilelist plugins
+        var cmd = {
+            cmd: 'ionic plugin add ' + plugin.url,
+            path: utils.getSelectedProjectPath(),
+            onterminated: function(msg) {
+                updateStatus('addingPlugin_' + plugin.pluginName, false);
+
+                studio.hideProgressBarOnStatusBar();
+                studio.showMessageOnStatusBar('Cordova ' + plugin.pluginName + ' is added.');
+
+                if(plugin.onterminated) {
+                    plugin.onterminated.call();    
+                }
+            }
+        };
+                
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Cordova adding plugin ' + plugin.pluginName + '...');
+        updateStatus('addingPlugin_' + plugin.pluginName, true);
+        utils.executeAsyncCmd(cmd);
+    }
 
     function updateStatus(key, value) {
         running[key] = value;
@@ -593,7 +623,7 @@ actions.launchBuild = function(message) {
     if(! checkProject()) {
         return;
     }
-        
+    
     if(currentOs == 'windows' && ! status['Android SDK']) {
         utils.printConsole({
             message: '{%span class="red"%}Android SDK dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.android),
@@ -601,7 +631,7 @@ actions.launchBuild = function(message) {
         });
         return;
     }
-
+    
     if(! status['Ionic']) {
         utils.printConsole({
             message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
