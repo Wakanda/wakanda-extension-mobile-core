@@ -34,7 +34,7 @@ function getSelectedProjectPath() {
 
     var projects = studio.getSelectedProjects();
     if(projects.length === 1) {
-        return projects[0].split('/').slice(0, -1).join('/') + '/mobile';
+        return projects[0].split('/').slice(0, -1).join('/');
     }
 }
 
@@ -46,6 +46,14 @@ function getSelectedProjectName() {
         var path = projects[0].split('/').pop();
         return path.replace('.waProject', '');
     }
+}
+
+function getMobileProjectPath() {
+    return getSelectedProjectPath() + '/mobile';
+}
+
+function getWebProjectPath() {
+    return getSelectedProjectPath() + '/web';
 }
 
 function stringifyFunc(obj) {
@@ -267,3 +275,5 @@ exports.killProcessPid = killProcessPid;
 exports.getStorage = getStorage;
 exports.setStorage = setStorage;
 exports.getConnectedDevices = getConnectedDevices;
+exports.getMobileProjectPath = getMobileProjectPath;
+exports.getWebProjectPath = getWebProjectPath;

@@ -20,6 +20,13 @@
                 "trigger": [
                     { "event": "onStudioStart" }
                 ]
+            },
+            {
+                "name": "handleServerConnect",
+                "title": "launch waiting tasks of server connect",
+                "trigger": [
+                    { "event": "onServerConnect" }
+                ]
             }
         ],
         "lifetime": "application_lifetime"

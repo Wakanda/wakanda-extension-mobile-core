@@ -7,6 +7,23 @@ var status = {};
 
 var currentOs = os.isWindows ? 'windows' : 'mac';
 
+var GULP_INSTALLED = false;
+
+utils.executeAsyncCmd({
+    cmd: 'gulp -v',
+    options: {
+        consoleSilentMode: true
+    },
+    onmessage: function(msg) {
+        GULP_INSTALLED = true;
+    },
+    onerror: function(msg) {
+        GULP_INSTALLED= false;
+    }
+});
+
+
+
 var troubleShootingConfig = {
     xcode: {
         text: 'Install Xcode',
@@ -297,7 +314,7 @@ actions.launchTest = function(message) {
 
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save the pid of the process    
                 utils.setStorage({ name: 'services', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
@@ -351,7 +368,7 @@ actions.launchRun = function(message) {
             // and when terminated, launch emulate
             var cmd = {
                 cmd: 'ionic platform add ' + platform,
-                path: utils.getSelectedProjectPath(),
+                path: utils.getMobileProjectPath(),
                 onterminated: function(msg) {
 
                     updateStatus('addingPlatform_' + platform, false);
@@ -390,7 +407,7 @@ actions.launchRun = function(message) {
         // adding whilelist plugins
         var cmd = {
             cmd: 'ionic plugin add ' + plugin.url,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 updateStatus('addingPlugin_' + plugin.pluginName, false);
 
@@ -445,7 +462,7 @@ actions.launchRun = function(message) {
 
         var cmd = {
             cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
                 utils.setStorage({ name: 'emulators', key: platform, value: {  pid: worker._systemWorker.getInfos().pid } });
@@ -489,7 +506,7 @@ actions.launchRun = function(message) {
 
             var cmd = {
                 cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android': 'ionic run --livereload --device ios'),
-                path: utils.getSelectedProjectPath(),
+                path: utils.getMobileProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
 
@@ -572,7 +589,6 @@ actions.launchRun = function(message) {
         return addresses;
     }
 };
-
 actions.stopProjectIonicSerices = function() {
     "use strict";
 
@@ -676,7 +692,7 @@ actions.launchBuild = function(message) {
 
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
 
                 // check if the build is successful
@@ -732,7 +748,7 @@ actions.launchBuild = function(message) {
         updateStatus(platform, true);
         var cmd = {
             cmd: 'ionic platform add ' + platform,
-            path: utils.getSelectedProjectPath(),
+            path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 build(platform);
             },
@@ -759,13 +775,109 @@ actions.openBuildFolder = function(message) {
 
     utils.executeAsyncCmd({ 
         cmd: os.isWindows ? 'explorer .' : 'open .', 
-        path: message.params.platform === 'android' ? utils.getSelectedProjectPath() + '/platforms/android/build/outputs/apk' : utils.getSelectedProjectPath() + '/platforms/ios/'
+        path: message.params.platform === 'android' ? utils.getMobileProjectPath() + '/platforms/android/build/outputs/apk' : utils.getMobileProjectPath() + '/platforms/ios/'
     });    
 };
 
 actions.updateIonicConfig = function(message) {
     updateIonicConfig(message.params);
 };
+
+actions.launchWebPreview = function(message) {
+    var config = message.params,
+        projectName = utils.getSelectedProjectName(),
+        projectPath = utils.getWebProjectPath();
+ 
+    // if no (or more than one) project is selected
+    if(! projectName) {
+        studio.alert('You must select one and only one project in your Wakanda Solution.');
+        return false;
+    }
+
+    // test if web project is not empty
+    var file = File(projectPath + '/app/index.html');
+    if(! file.exists) {
+        studio.alert('The structure of your web project is not valid, there is not app/index.html file !');
+        return false;
+    }
+
+    // check if server is connected, else start it
+    var serverStatus = studio.isCommandChecked('startWakandaServer');
+    if(serverStatus) {
+        webPreview(config.webStudioPreview);
+    } else {
+        utils.setStorage({ 
+            name: 'waitingServerConnect', 
+            value: { 
+                waiting: true, 
+                webStudioPreview: config.webStudioPreview,
+                dateTime: new Date().getTime()
+            }
+        });
+
+        fireEvent('webRunWaitConnectToServer');
+        studio.sendCommand('StartWakandaServer');
+    }
+};
+
+actions.handleServerConnect = function(message) {
+    var storage = utils.getStorage('waitingServerConnect'),
+        timeout = 2; // timeout is in seconds unit
+
+    if(! storage.waiting) {
+        return;
+    }
+
+    fireEvent('webRunConnectedToServer');
+
+    utils.setStorage('waitingServerConnect', { waiting: false });
+
+    // if server is not launched after 2 minutes, do nothing !
+    if(new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
+        utils.printConsole({
+            type: 'ERROR',
+            message: 'Wainting to connect to solution server exceed ' + timeout + ' seconds, Running web action is canceled.'
+        });
+        return;
+    }
+  
+    webPreview(storage.webStudioPreview);
+};
+
+function webPreview(webStudioPreview) {
+
+    var projectPath = utils.getWebProjectPath(),
+        url;
+
+    // check if to use gulp is installed and configured for this web project
+    // else, open only index.html
+    if(!GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/node_modules/gulp/package.json').exists) {
+        url = 'http://127.0.0.1:8081/app/index.html';
+        _display();
+    } else {
+        // launch livereload using node
+        url = 'http://127.0.0.1:8000/';
+        var command = {
+            cmd: 'gulp serve',
+            path: projectPath,
+            onmessage: function(msg) {
+                _display();
+            }
+        };
+        utils.executeAsyncCmd(command);
+    }
+
+    function _display() {
+        if(webStudioPreview) {
+            studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
+            studio.extension.openPageInTab(url, 'Web App');
+        } else {
+            utils.executeAsyncCmd({
+                cmd: os.isWindows ? 'start chrome ' + url : "open -a 'Google Chrome' " + url
+            });
+        }
+    }
+}
 
 function updateIonicConfig(values) {
     var path = process.env.HOME + '/.ionic/ionic.config',
@@ -791,7 +903,7 @@ function checkProject() {
     "use strict";
 
     var projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getSelectedProjectPath();
+        projectPath = utils.getMobileProjectPath();
 
     // if no (or more than one) project is selected
     if(! projectName) {
