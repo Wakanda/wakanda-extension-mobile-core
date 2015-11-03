@@ -852,7 +852,7 @@ function webPreview(webStudioPreview) {
     // check if to use gulp is installed and configured for this web project
     // else, open only index.html
     if(!GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/node_modules/gulp/package.json').exists) {
-        url = 'http://127.0.0.1:8081/app/index.html';
+        url = 'http://127.0.0.1:' + utils.getWakandaServerProjectPort() + '/app/index.html';
         _display();
     } else {
         // launch livereload using node
