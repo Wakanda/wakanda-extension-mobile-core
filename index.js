@@ -543,9 +543,9 @@ actions.launchRun = function(message) {
         }
 
         var platformServeAddress = studio.getPreferences('mobile.platformServeAddress');
-        var path = process.env.HOME + '/.ionic/ionic.config',
+        var path = (os.isWindows ? Folder(process.env.USERPROFILE).path : process.env.HOME) + '/.ionic/ionic.config',
             file = File(path);
-        
+
         if(file.exists) {
             var config = JSON.parse(file.toString());
             var address = config.platformServeAddress;
