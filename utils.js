@@ -93,8 +93,11 @@ function killProcessPid(pid) {
     if(! pid) {
         return;
     }
-
-    return executeSyncCmd({ cmd: (os.isWindows ? 'taskkill /PID ' : 'kill ') + pid });
+    try {
+        return executeSyncCmd({ cmd: (os.isWindows ? 'taskkill /PID ' : 'kill ') + pid });
+    } catch(e) {
+        printConsole({ msg: e.message, type: 'ERROR' });
+    }
 }
 
 function wrapCommand(command) {
