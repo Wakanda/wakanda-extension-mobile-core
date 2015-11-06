@@ -36,7 +36,7 @@ var troubleShootingConfig = {
         text: 'Install Node.JS',      
         windows: {
             app: 'android-app',
-            step: '1'
+            step: '0'
         },
         mac: {
             app: 'ios-app',
@@ -47,7 +47,7 @@ var troubleShootingConfig = {
         text: 'Install Cordova',      
         windows: {
             app: 'android-app',
-            step: '2'
+            step: '1'
         },
         mac: {
             app: 'ios-app',
@@ -58,7 +58,7 @@ var troubleShootingConfig = {
         text: 'Install Ionic',      
         windows: {
             app: 'android-app',
-            step: '3'
+            step: '2'
         },
         mac: {
             app: 'ios-app',
@@ -69,7 +69,7 @@ var troubleShootingConfig = {
         text: 'Install Java SDK',      
         windows: {
             app: 'android-app',
-            step: '4'
+            step: '3'
         },
         mac: {
             app: 'android-app',
@@ -80,7 +80,7 @@ var troubleShootingConfig = {
         text: 'Install Android SDK',      
         windows: {
             app: 'android-app',
-            step: '6'
+            step: '5'
         },
         mac: {
             app: 'android-app',
