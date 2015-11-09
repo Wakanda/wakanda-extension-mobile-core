@@ -268,7 +268,7 @@ function getConnectedDevices() {
 
 function getWakandaServerProjectPort() {
    // parse Wakanda project settings and get port
-    var solutionPath = studio.currentSolution.getSolutionFile().parent.path,
+    var solutionPath = studio.currentSolution.getSolutionFile().parent.parent.path,
         projectName = getSelectedProjectName(),
         regex = /<http .* port="(\d+)"/m;
 
