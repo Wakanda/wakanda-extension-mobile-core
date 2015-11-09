@@ -797,7 +797,7 @@ actions.launchWebPreview = function(message) {
     // test if web project is not empty
     var file = File(projectPath + '/app/index.html');
     if(! file.exists) {
-        studio.alert('The structure of your web project is not valid, there is not app/index.html file !');
+        studio.alert('The structure of your web project is not valid, there is no app/index.html file !');
         return false;
     }
 
