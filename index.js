@@ -612,6 +612,21 @@ actions.stopProjectIonicSerices = function() {
     utils.setStorage({ name: 'devices', value: devices, notExtend: true });
 };
 
+actions.stopProjectGulpServices = function() {
+    "use strict";
+
+    var services = utils.getStorage('gulp');
+
+    Object.keys(services).forEach(function(elm) {
+        if(services[elm].pid) {
+            utils.killProcessPid(services[elm].pid);
+            delete services[elm];
+        }
+    });
+
+    utils.setStorage({ name: 'gulp', value: services, notExtend: true });
+};
+
 actions.getStorage = function() {
     "use strict";
 
