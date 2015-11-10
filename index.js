@@ -619,6 +619,7 @@ actions.getStorage = function() {
     studio.log('-> storage services : ' + studio.extension.storage.getItem('services'));
     studio.log('-> storage emulators : ' + studio.extension.storage.getItem('emulators'));
     studio.log('-> storage devices : ' + studio.extension.storage.getItem('devices'));
+    studio.log('-> storage gulp : ' + studio.extension.storage.getItem('gulp'));
 };
 
 exports.handleMessage = function handleMessage(message) {
@@ -847,28 +848,61 @@ actions.handleServerConnect = function(message) {
 function webPreview(webStudioPreview) {
 
     var projectPath = utils.getWebProjectPath(),
-        url;
+        projectName = utils.getSelectedProjectName();
 
     // check if to use gulp is installed and configured for this web project
     // else, open only index.html
-    if(!GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/node_modules/gulp/package.json').exists) {
-        url = 'http://127.0.0.1:' + utils.getWakandaServerProjectPort() + '/app/index.html';
-        _display();
-    } else {
-        // launch livereload using node
-        url = 'http://127.0.0.1:8000/';
+    if(! status.Node || !GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/package.json').exists) {
+        _display(false);
+
+    } else { // launch livereload using node
+        // install node modules
+        fireEvent('webInstallingNpmModules');
+
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Installing npm modules from package.json ...');
+
         var command = {
-            cmd: 'gulp serve',
+            cmd: 'npm install',
             path: projectPath,
-            onmessage: function(msg) {
-                _display();
+            onterminated: function(msg) {
+                fireEvent('webInstallingNpmModulesFinished');
+                studio.hideProgressBarOnStatusBar();
+                if(msg.exitStatus === 0) {
+                    _launchGulp();
+                    studio.showMessageOnStatusBar('npm modules installed.');
+                } else {
+                    _display(false);
+                    studio.showMessageOnStatusBar('npm modules installation exited with erros.');
+                }
             }
         };
         utils.executeAsyncCmd(command);
     }
 
-    function _display() {
-        if(webStudioPreview) {
+    function _getUrl(livereload) {
+        if(livereload) {
+            return 'http://127.0.0.1:8000/';
+        } else {
+            return 'http://127.0.0.1:' + utils.getWakandaServerProjectPort() + '/app/index.html';
+        }
+    }
+
+    function _launchGulp() {
+        var command = {
+            cmd: 'gulp serve',
+            path: projectPath,
+            onmessage: function(msg) {
+                _display(true);
+                utils.setStorage({ name: 'gulp', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
+            }
+        };
+        var worker = utils.executeAsyncCmd(command);        
+    }
+
+    function _display(livereload) {
+        var url = _getUrl(livereload);
+        if(livereload) {
             studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
             studio.extension.openPageInTab(url, 'Web App');
         } else {
