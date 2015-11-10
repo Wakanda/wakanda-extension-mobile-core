@@ -836,7 +836,7 @@ actions.handleServerConnect = function(message) {
     if(new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
         utils.printConsole({
             type: 'ERROR',
-            message: 'Wainting to connect to solution server exceed ' + timeout + ' seconds, Running web action is canceled.'
+            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, Running web action is cancelled.'
         });
         return;
     }
