@@ -1,16 +1,33 @@
 var Base64 = require("base64");
 var shell = require("shellWorker");
 
-var bash_profile = {};
-if(! os.isWindows) {
-    bash_profile.file = process.env.HOME + '/.bash_profile';
-    try {
-        bash_profile.exists = File(bash_profile.file).exists;
-    } catch(e) {
-        bash_profile.exists = false;
-        studio.log('Error after checking user .bash_profile, error : ' + e);
+function getPaths() {
+    var paths = [];
+
+    if(os.isWindows) {
+        return paths;
     }
+    
+    // default paths
+    paths = paths.concat([
+        '/usr/local/bin',
+        '/usr/libexec/java_home/bin',
+        '/usr/local/opt/android-sdk/platform-tools',
+        '/usr/local/opt/android-sdk/tools'
+    ]);
+
+    // user preferences paths
+    var environmentVariablePath = studio.getPreferences('environmentVariablePath') || '';
+    environmentVariablePath.split("\n").forEach(function(path) {
+        if(path.trim()) {
+            paths.push(path.trim());
+        }
+    });
+
+    return paths;
 }
+
+
 
 function getMessageString(options) {
     "use strict";
@@ -101,8 +118,9 @@ function killProcessPid(pid) {
 }
 
 function wrapCommand(command) {
-    if(! os.isWindows && bash_profile.exists) {
-        command = 'source ' + bash_profile.file + ';' + command;
+    var paths = os.isMac ? getPaths().join(':') : undefined;
+    if(os.isMac && paths) {
+        command = 'export "PATH=$PATH:' + paths + '" ;' + command;
     }
     return command;
 }
