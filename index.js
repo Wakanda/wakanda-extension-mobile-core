@@ -979,7 +979,7 @@ function webPreview(webStudioPreview) {
 
     function _display(livereload) {
         var url = _getUrl(livereload);
-        if (livereload) {
+        if (webStudioPreview) {
             studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
             studio.extension.openPageInTab(url, 'Web App');
         } else {
