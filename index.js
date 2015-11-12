@@ -943,7 +943,7 @@ function webPreview(webStudioPreview) {
                     _launchGulp();
                     studio.showMessageOnStatusBar('npm modules installed.');
                 } else {
-                    _display(false);
+                    _display(webStudioPreview);
                     studio.showMessageOnStatusBar('npm modules installation exited with erros.');
                 }
             }
