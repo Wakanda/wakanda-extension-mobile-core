@@ -230,11 +230,11 @@ actions.launchTest = function (message) {
         serverLaunched = false,
         browserPreviewed = false;
 
-    if (!checkProject()) {
+    if (! checkProject()) {
         return;
     }
 
-    if (!status['Ionic']) {
+    if (! status['Ionic']) {
         utils.printConsole({
             message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
             type: 'ERROR'
@@ -361,7 +361,7 @@ actions.launchRun = function (message) {
         return;
     }
 
-    if (currentOs == 'windows' && !status['Android SDK']) {
+    if (currentOs === 'windows' && ! status['Android SDK']) {
         utils.printConsole({
             message: '{%span class="red"%}Android SDK dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.android),
             type: 'ERROR'
@@ -369,7 +369,7 @@ actions.launchRun = function (message) {
         return;
     }
 
-    if (!status['Ionic']) {
+    if (! status['Ionic']) {
         utils.printConsole({
             message: '{%span class="red"%}Ionic dependency not found{%/span%}' + getTroubleShootingLink(troubleShootingConfig.ionic),
             type: 'ERROR'
@@ -377,7 +377,7 @@ actions.launchRun = function (message) {
         return;
     }
 
-    if (!message.params.emulator.android && !message.params.emulator.ios && !message.params.device.android && !message.params.device.ios) {
+    if (! message.params.emulator.android && ! message.params.emulator.ios && ! message.params.device.android && ! message.params.device.ios) {
         studio.alert('You must select an emulator or a device to run your application.');
         return;
     }
@@ -392,7 +392,7 @@ actions.launchRun = function (message) {
             var cmd = {
                 cmd: 'ionic platform add ' + platform,
                 path: utils.getMobileProjectPath(),
-                onterminated: function (msg) {
+                onterminated: function(msg) {
 
                     updateStatus('addingPlatform_' + platform, false);
 
@@ -406,7 +406,7 @@ actions.launchRun = function (message) {
                     addPlugins({
                         pluginName: 'whitelist',
                         url: 'https://github.com/apache/cordova-plugin-whitelist.git',
-                        onterminated: function () {
+                        onterminated: function() {
                             if (message.params.emulator[platform]) {
                                 emulate(platform);
                             }
@@ -437,7 +437,7 @@ actions.launchRun = function (message) {
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Cordova ' + plugin.pluginName + ' is added.');
 
-                if (plugin.onterminated) {
+                if(plugin.onterminated) {
                     plugin.onterminated.call();
                 }
             }
@@ -477,7 +477,7 @@ actions.launchRun = function (message) {
         storage[platform] = storage[platform] || {};
 
         // kill the last ionic service for this platform
-        if (storage[platform].pid) {
+        if(storage[platform].pid) {
             utils.killProcessPid(storage[platform].pid);
         }
 
@@ -486,7 +486,7 @@ actions.launchRun = function (message) {
         var cmd = {
             cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
             path: utils.getMobileProjectPath(),
-            onmessage: function (msg) {
+            onmessage: function(msg) {
                 // save ionic process pid
                 utils.setStorage({
                     name: 'emulators',
@@ -507,8 +507,8 @@ actions.launchRun = function (message) {
                     studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
                 }
             },
-            onterminated: function (msg) {},
-            onerror: function (msg) {
+            onterminated: function(msg) {},
+            onerror: function(msg) {
                 if (!/HAX is working an/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
@@ -528,14 +528,14 @@ actions.launchRun = function (message) {
         studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
 
-        devices[platform].forEach(function (device) {
+        devices[platform].forEach(function(device) {
 
             updateStatus('device_' + platform + '_' + device.id, true);
 
             var cmd = {
                 cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android' : 'ionic run --livereload --device ios'),
                 path: utils.getMobileProjectPath(),
-                onmessage: function (msg) {
+                onmessage: function(msg) {
                     utils.setStorage({
                         name: 'devices',
                         key: platform + '_' + device.id,
@@ -554,10 +554,10 @@ actions.launchRun = function (message) {
                         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
                     }
                 },
-                onterminated: function (msg) {
+                onterminated: function(msg) {
                     updateStatus('device_' + platform + '_' + device.id, false);
                 },
-                onerror: function (msg) {
+                onerror: function(msg) {
                     studio.hideProgressBarOnStatusBar();
                     studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + device.id);
                     updateStatus('device_' + platform + '_' + device.id, false);
@@ -612,8 +612,8 @@ actions.launchRun = function (message) {
         var interfaces = os.networkInterfaces();
         var addresses = [];
 
-        Object.keys(interfaces).forEach(function (interface) {
-            interfaces[interface].forEach(function (cfg) {
+        Object.keys(interfaces).forEach(function(interface) {
+            interfaces[interface].forEach(function(cfg) {
                 if (cfg.address !== '127.0.0.1') {
                     addresses.push(cfg.address);
                 }
@@ -623,7 +623,7 @@ actions.launchRun = function (message) {
         return addresses;
     }
 };
-actions.stopProjectIonicSerices = function () {
+actions.stopProjectIonicSerices = function() {
     "use strict";
 
     var services = utils.getStorage('services');
@@ -632,8 +632,8 @@ actions.stopProjectIonicSerices = function () {
 
     studio.log('Stopping launched ionic project process');
     // kill all launched ionic process
-    [services, emulators, devices].forEach(function (storage) {
-        Object.keys(storage).forEach(function (elm) {
+    [services, emulators, devices].forEach(function(storage) {
+        Object.keys(storage).forEach(function(elm) {
             if (storage[elm].pid) {
                 utils.killProcessPid(storage[elm].pid);
                 delete storage[elm];
@@ -658,12 +658,12 @@ actions.stopProjectIonicSerices = function () {
     });
 };
 
-actions.stopProjectGulpServices = function () {
+actions.stopProjectGulpServices = function() {
     "use strict";
 
     var services = utils.getStorage('gulp');
 
-    Object.keys(services).forEach(function (elm) {
+    Object.keys(services).forEach(function(elm) {
         if (services[elm].pid) {
             utils.killProcessPid(services[elm].pid);
             delete services[elm];
@@ -677,7 +677,7 @@ actions.stopProjectGulpServices = function () {
     });
 };
 
-actions.getStorage = function () {
+actions.getStorage = function() {
     "use strict";
 
     studio.log('-> storage checks : ' + studio.extension.storage.getItem('checks'));
@@ -699,7 +699,7 @@ exports.handleMessage = function handleMessage(message) {
     actions[actionName](message);
 };
 
-actions.launchBuild = function (message) {
+actions.launchBuild = function(message) {
     "use strict";
 
     if (!checkProject()) {
@@ -738,7 +738,7 @@ actions.launchBuild = function (message) {
         building[key] = value;
 
         var isBuilding = false;
-        Object.keys(building).forEach(function (key) {
+        Object.keys(building).forEach(function(key) {
             isBuilding = building[key] || isBuilding;
         });
 
@@ -761,7 +761,7 @@ actions.launchBuild = function (message) {
         var cmd = {
             cmd: 'ionic build ' + platform + ' --release',
             path: utils.getMobileProjectPath(),
-            onmessage: function (msg) {
+            onmessage: function(msg) {
 
                 // check if the build is successful
                 if (platform === 'android' && /BUILD SUCCESSFUL/.test(msg)) {
@@ -772,7 +772,7 @@ actions.launchBuild = function (message) {
                     buildingError[platform] = false;
                 }
             },
-            onerror: function (msg) {
+            onerror: function(msg) {
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Error when building application for ' + platformName + '.');
                 buildingError[platform] = true;
@@ -783,7 +783,7 @@ actions.launchBuild = function (message) {
                 });
 
             },
-            onterminated: function (msg) {
+            onterminated: function(msg) {
                 // check if builded without error
                 if (msg.exitStatus === 0) {
                     if (!buildingError[platform]) {
@@ -810,7 +810,7 @@ actions.launchBuild = function (message) {
         utils.executeAsyncCmd(cmd);
     }
 
-    ['android', 'ios'].forEach(function (platform) {
+    ['android', 'ios'].forEach(function(platform) {
         if (!message.params[platform]) {
             return;
         }
@@ -819,10 +819,10 @@ actions.launchBuild = function (message) {
         var cmd = {
             cmd: 'ionic platform add ' + platform,
             path: utils.getMobileProjectPath(),
-            onterminated: function (msg) {
+            onterminated: function(msg) {
                 build(platform);
             },
-            onerror: function (msg) {
+            onerror: function(msg) {
                 if (!/Platform (ios|android) already added/.test(msg)) {
                     //updateStatus(platform, false);
                     utils.printConsole({
@@ -840,7 +840,7 @@ actions.launchBuild = function (message) {
     });
 };
 
-actions.openBuildFolder = function (message) {
+actions.openBuildFolder = function(message) {
     "use strict";
 
     utils.executeAsyncCmd({
@@ -849,11 +849,11 @@ actions.openBuildFolder = function (message) {
     });
 };
 
-actions.updateIonicConfig = function (message) {
+actions.updateIonicConfig = function(message) {
     updateIonicConfig(message.params);
 };
 
-actions.launchWebPreview = function (message) {
+actions.launchWebPreview = function(message) {
     var config = message.params,
         projectName = utils.getSelectedProjectName(),
         projectPath = utils.getWebProjectPath();
@@ -890,7 +890,7 @@ actions.launchWebPreview = function (message) {
     }
 };
 
-actions.handleServerConnect = function (message) {
+actions.handleServerConnect = function(message) {
     var storage = utils.getStorage('waitingServerConnect'),
         timeout = 2; // timeout is in seconds unit
 
@@ -936,7 +936,7 @@ function webPreview(webStudioPreview) {
         var command = {
             cmd: 'npm install',
             path: projectPath,
-            onterminated: function (msg) {
+            onterminated: function(msg) {
                 fireEvent('webInstallingNpmModulesFinished');
                 studio.hideProgressBarOnStatusBar();
                 if (msg.exitStatus === 0) {
@@ -963,7 +963,7 @@ function webPreview(webStudioPreview) {
         var command = {
             cmd: 'gulp serve',
             path: projectPath,
-            onmessage: function (msg) {
+            onmessage: function(msg) {
                 _display(true);
                 utils.setStorage({
                     name: 'gulp',
@@ -996,7 +996,7 @@ function updateIonicConfig(values) {
 
     if (file.exists) {
         var config = JSON.parse(file.toString());
-        Object.keys(values).forEach(function (key) {
+        Object.keys(values).forEach(function(key) {
             config[key] = values[key];
         });
 
