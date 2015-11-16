@@ -658,24 +658,7 @@ actions.stopProjectIonicSerices = function() {
     });
 };
 
-actions.stopProjectGulpServices = function() {
-    "use strict";
-
-    var services = utils.getStorage('gulp');
-
-    Object.keys(services).forEach(function(elm) {
-        if (services[elm].pid) {
-            utils.killProcessPid(services[elm].pid);
-            delete services[elm];
-        }
-    });
-
-    utils.setStorage({
-        name: 'gulp',
-        value: services,
-        notExtend: true
-    });
-};
+actions.stopProjectGulpServices = stopProjectGulpServices;
 
 actions.getStorage = function() {
     "use strict";
@@ -960,6 +943,9 @@ function webPreview(webStudioPreview) {
     }
 
     function _launchGulp() {
+        // stop launched gulp
+        stopProjectGulpServices();
+
         var command = {
             cmd: 'gulp serve',
             path: projectPath,
@@ -972,6 +958,8 @@ function webPreview(webStudioPreview) {
                         pid: worker._systemWorker.getInfos().pid
                     }
                 });
+            },
+            onterminated: function(msg) {
             }
         };
         var worker = utils.executeAsyncCmd(command);
@@ -1034,3 +1022,21 @@ function checkProject() {
 
     return true;
 }
+
+function stopProjectGulpServices() {
+
+    var services = utils.getStorage('gulp');
+    Object.keys(services).forEach(function(elm) {
+        if (services[elm].pid) {
+            utils.killProcessAndChild(services[elm].pid);
+            delete services[elm];
+        }
+    });
+
+    utils.setStorage({
+        name: 'gulp',
+        value: services,
+        notExtend: true
+    });
+}
+
