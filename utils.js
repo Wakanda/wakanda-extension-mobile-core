@@ -117,6 +117,17 @@ function killProcessPid(pid) {
     }
 }
 
+function killProcessAndChild(pid) {
+    if(! pid) {
+        return;
+    }
+    try {
+        return executeSyncCmd({ cmd: (os.isWindows ? 'taskkill /PID ' : 'pkill -TERM -P ') + pid });
+    } catch(e) {
+        printConsole({ msg: e.message, type: 'ERROR' });
+    }
+}
+
 function wrapCommand(command) {
     var paths = os.isMac ? getPaths().join(':') : undefined;
     if(os.isMac && paths) {
@@ -305,6 +316,7 @@ exports.getAvailablePort = getAvailablePort;
 exports.executeAsyncCmd = executeAsyncCmd;
 exports.executeSyncCmd = executeSyncCmd;
 exports.killProcessPid = killProcessPid;
+exports.killProcessAndChild = killProcessAndChild;
 exports.getStorage = getStorage;
 exports.setStorage = setStorage;
 exports.getConnectedDevices = getConnectedDevices;
