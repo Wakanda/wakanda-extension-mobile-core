@@ -129,7 +129,6 @@ function executeAsyncCmd(command) {
     "use strict";
 
     var consoleSilentMode = command.options && command.options.consoleSilentMode;
-    var cmd = command.cmd
     if(! consoleSilentMode) {
         printConsole({
             message: command.path ? (command.path + ' ') + command.cmd : command.cmd,
