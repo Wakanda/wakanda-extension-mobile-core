@@ -7,23 +7,6 @@ var status = {};
 
 var currentOs = os.isWindows ? 'windows' : 'mac';
 
-var GULP_INSTALLED = false;
-
-utils.executeAsyncCmd({
-    cmd: 'gulp -v',
-    options: {
-        consoleSilentMode: true
-    },
-    onmessage: function (msg) {
-        GULP_INSTALLED = true;
-    },
-    onerror: function (msg) {
-        GULP_INSTALLED = false;
-    }
-});
-
-
-
 var troubleShootingConfig = {
     xcode: {
         text: 'Install Xcode',
@@ -112,6 +95,11 @@ actions.checkDependencies = function () {
         mandatory: true,
         troubleshooting: troubleShootingConfig.node
     }, {
+        cmd: 'gulp -v',
+        title: 'Gulp',
+        mandatory: false,
+        defaultMessage: ' - Run: npm install -g gulp'
+    }, {
         cmd: 'ionic -v',
         title: 'Ionic',
         mandatory: true,
@@ -156,7 +144,7 @@ actions.checkDependencies = function () {
             return;
         }
 
-        var troubleshootingText = getTroubleShootingLink(check.troubleshooting);
+        var troubleshootingText = getTroubleShootingLink(check.troubleshooting) || check.defaultMessage || '';
 
         var cmd = {
             cmd: check.cmd,
@@ -900,38 +888,77 @@ actions.handleServerConnect = function(message) {
 };
 
 function webPreview(webStudioPreview) {
-
     var projectPath = utils.getWebProjectPath(),
-        projectName = utils.getSelectedProjectName();
+        projectName = utils.getSelectedProjectName(),
+        gulp_installed = false;
 
-    // check if to use gulp is installed and configured for this web project
-    // else, open only index.html
-    if (!status.Node || !GULP_INSTALLED || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/package.json').exists) {
-        _display(false);
+    // check if gulp installed
+    // running in synchronous mode crash the console
+    utils.executeAsyncCmd({
+        cmd: 'gulp -v',
+        onterminated: function(msg) {
+            gulp_installed = msg.exitStatus === 0;
+            _preview();
+        }
+    });
 
-    } else { // launch livereload using node
-        // install node modules
-        fireEvent('webInstallingNpmModules');
+    function _preview() {
+        if(! status.Node || ! gulp_installed) {
+            utils.printConsole({
+                message: '{%span class="orange"%}Live reloading is currently deactivated. If you want the page to reload automatically after any file changes occur, please install node and gulp.{%/span%}',
+                type: 'INFO'
+            });
 
-        studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Installing npm modules from package.json ...');
-
-        var command = {
-            cmd: 'npm install',
-            path: projectPath,
-            onterminated: function(msg) {
-                fireEvent('webInstallingNpmModulesFinished');
-                studio.hideProgressBarOnStatusBar();
-                if (msg.exitStatus === 0) {
-                    _launchGulp();
-                    studio.showMessageOnStatusBar('npm modules installed.');
-                } else {
-                    _display(webStudioPreview);
-                    studio.showMessageOnStatusBar('npm modules installation exited with erros.');
-                }
+            if(! status.Node) {
+                utils.printConsole({
+                    message: '{%span class="orange"%}Node: Not Found - Install Node »{%/span%}' + getTroubleShootingLink(troubleShootingConfig.node),
+                    type: 'WARNING'
+                });    
             }
-        };
-        utils.executeAsyncCmd(command);
+
+            if(! gulp_installed) {
+                utils.printConsole({
+                    message: '{%span class="orange"%}Gulp: Not Found - Install Gulp{%/span%}' + ' - Run: npm install -g gulp{%/span%}',
+                    type: 'WARNING'
+                });    
+            }
+
+            utils.printConsole({
+                message: '{%span class="orange"%}If necessary, you can add custom paths by going to Preferences > Environment variables.{%/span%}',
+                type: 'INFO'
+            });
+
+        }
+
+        // check if to use gulp is installed and configured for this web project
+        // else, open only index.html
+        if (!status.Node || !status.Gulp || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/package.json').exists) {
+            _display(false);
+
+        } else { // launch livereload using node
+            // install node modules
+            fireEvent('webInstallingNpmModules');
+
+            studio.hideProgressBarOnStatusBar();
+            studio.showProgressBarOnStatusBar('Installing npm modules from package.json ...');
+
+            var command = {
+                cmd: 'npm install',
+                path: projectPath,
+                onterminated: function(msg) {
+                    fireEvent('webInstallingNpmModulesFinished');
+                    studio.hideProgressBarOnStatusBar();
+                    if (msg.exitStatus === 0) {
+                        _launchGulp();
+                        studio.showMessageOnStatusBar('npm modules installed.');
+                    } else {
+                        _display(webStudioPreview);
+                        studio.showMessageOnStatusBar('npm modules installation exited with erros.');
+                    }
+                }
+            };
+            utils.executeAsyncCmd(command);
+        }
     }
 
     function _getUrl(livereload) {
@@ -1038,5 +1065,23 @@ function stopProjectGulpServices() {
         value: services,
         notExtend: true
     });
+}
+
+function checkGulpInstalled() {
+    var installed = false;
+    try {
+        var output = utils.executeSyncCmd({
+            cmd: 'gulp -v',
+            options: {
+                consoleSilentMode: true
+            }
+        });
+        installed = /version/.test(output);
+    } catch(e) {
+        utils.executeSyncCmd({ cmd: 'echo 1' });
+        studio.log(e.message);
+    }
+
+    return installed;
 }
 
