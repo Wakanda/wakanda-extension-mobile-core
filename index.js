@@ -1066,22 +1066,3 @@ function stopProjectGulpServices() {
         notExtend: true
     });
 }
-
-function checkGulpInstalled() {
-    var installed = false;
-    try {
-        var output = utils.executeSyncCmd({
-            cmd: 'gulp -v',
-            options: {
-                consoleSilentMode: true
-            }
-        });
-        installed = /version/.test(output);
-    } catch(e) {
-        utils.executeSyncCmd({ cmd: 'echo 1' });
-        studio.log(e.message);
-    }
-
-    return installed;
-}
-
