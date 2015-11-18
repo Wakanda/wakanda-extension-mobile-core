@@ -470,7 +470,7 @@ actions.launchRun = function (message) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Emulator...');
 
         var storage = utils.getStorage('emulators');
 
@@ -500,18 +500,18 @@ actions.launchRun = function (message) {
                 var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                 if (started) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar(platformName + ' Simulator started.');
+                    studio.showMessageOnStatusBar(platformName + ' Emulator started.');
                     updateStatus('emulator_' + platform, false);
                 } else if (!/Ionic server commands, enter:/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Simulator...');
+                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Emulator...');
                 }
             },
             onterminated: function(msg) {},
             onerror: function(msg) {
                 if (!/HAX is working an/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' Simulator.');
+                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' Emulator.');
                     updateStatus('emulator_' + platform, false);
                 }
             }
