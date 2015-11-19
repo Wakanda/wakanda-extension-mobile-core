@@ -835,13 +835,6 @@ actions.launchWebPreview = function(message) {
         return false;
     }
 
-    // test if web project is not empty
-    var file = File(projectPath + '/app/index.html');
-    if (!file.exists) {
-        studio.alert('The structure of your web project is not valid, there is no app/index.html file !');
-        return false;
-    }
-
     // check if server is connected, else start it
     var serverStatus = studio.isCommandChecked('startWakandaServer');
     if (serverStatus) {
@@ -890,20 +883,32 @@ actions.handleServerConnect = function(message) {
 function webPreview(webStudioPreview) {
     var projectPath = utils.getWebProjectPath(),
         projectName = utils.getSelectedProjectName(),
-        gulp_installed = false;
+        gulpInstalled = false,
+        displayed = false,
+        options = {
+            connectPort: 8000,
+            serverUrl: studio.getProjectURL()
+        };
+    
+
+    if(! studio.Folder(utils.getSelectedProjectPath() + '/web/').exists || ! studio.File(projectPath + '/app/index.html').exists) {
+        // default behavior, for prototyper and Wakanda scaffolding project < WAK11
+        _display(false);
+        return;
+    }
 
     // check if gulp installed
     // running in synchronous mode crash the console
     utils.executeAsyncCmd({
         cmd: 'gulp -v',
         onterminated: function(msg) {
-            gulp_installed = msg.exitStatus === 0;
+            gulpInstalled = msg.exitStatus === 0;
             _preview();
         }
     });
 
     function _preview() {
-        if(! status.Node || ! gulp_installed) {
+        if(! status.Node || ! gulpInstalled) {
             utils.printConsole({
                 message: '{%span class="orange"%}Live reloading is currently deactivated. If you want the page to reload automatically after any file changes occur, please install node and gulp.{%/span%}',
                 type: 'INFO'
@@ -916,7 +921,7 @@ function webPreview(webStudioPreview) {
                 });    
             }
 
-            if(! gulp_installed) {
+            if(! gulpInstalled) {
                 utils.printConsole({
                     message: '{%span class="orange"%}Gulp: Not Found - Install Gulp{%/span%}' + ' - Run: npm install -g gulp{%/span%}',
                     type: 'WARNING'
@@ -932,7 +937,7 @@ function webPreview(webStudioPreview) {
 
         // check if to use gulp is installed and configured for this web project
         // else, open only index.html
-        if (!status.Node || !status.Gulp || !File(projectPath + '/gulpfile.js').exists || !File(projectPath + '/package.json').exists) {
+        if (! status.Node || ! status.Gulp || ! studio.File(projectPath + '/gulpfile.js').exists || ! studio.File(projectPath + '/package.json').exists) {
             _display(false);
 
         } else { // launch livereload using node
@@ -961,23 +966,18 @@ function webPreview(webStudioPreview) {
         }
     }
 
-    function _getUrl(livereload) {
-        if (livereload) {
-            return 'http://127.0.0.1:8000/';
-        } else {
-            return 'http://127.0.0.1:' + utils.getWakandaServerProjectPort() + '/app/index.html';
-        }
-    }
-
     function _launchGulp() {
         // stop launched gulp
         stopProjectGulpServices();
 
         var command = {
-            cmd: 'gulp serve',
+            cmd: 'gulp serve --serverUrl ' + options.serverUrl + ' --connectPort ' + options.connectPort,
             path: projectPath,
             onmessage: function(msg) {
-                _display(true);
+                if(! displayed) {
+                    displayed = true;
+                    _display(true);
+                }
                 utils.setStorage({
                     name: 'gulp',
                     key: projectName,
@@ -993,13 +993,14 @@ function webPreview(webStudioPreview) {
     }
 
     function _display(livereload) {
-        var url = _getUrl(livereload);
+        var url = livereload ? 'http://127.0.0.1:' + options.connectPort + '/' : options.serverUrl;
+
         if (webStudioPreview) {
             studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
             studio.extension.openPageInTab(url, 'Web App');
         } else {
             utils.executeAsyncCmd({
-                cmd: os.isWindows ? 'start ' + url : "open " + url
+                cmd: os.isWindows ? 'start ' + url : 'open ' + url
             });
         }
     }

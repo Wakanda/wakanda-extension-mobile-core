@@ -267,10 +267,19 @@ function getConnectedDevices() {
         try {
             output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
             devices.ios.connected = /iPhone/.test(output);
-            devices.ios.push('iPhone');
         } catch(e) {
             studio.log(e.message);
         }
+
+        if(! devices.ios.connected) {
+            try {
+                output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPad' });
+                devices.ios.connected = /iPad/.test(output);            
+            } catch(e) {
+                studio.log(e.message);
+            }
+        }
+        devices.ios.push('iOS');
     }
 
     // check for the android device
@@ -294,19 +303,6 @@ function getConnectedDevices() {
     return devices;
 }
 
-function getWakandaServerProjectPort() {
-   // parse Wakanda project settings and get port
-    var solutionPath = studio.currentSolution.getSolutionFile().parent.parent.path,
-        projectName = getSelectedProjectName(),
-        regex = /<http .* port="(\d+)"/m;
-
-    var settings = File(solutionPath + '/' + projectName + '/backend/settings.waSettings').toString();
-    var match = regex.exec(settings);
-    
-    return match.length > 1 ? match[1] : 8081;
-}
-
-
 exports.printConsole = printConsole;
 exports.getMessageString = getMessageString;
 exports.getSelectedProjectPath = getSelectedProjectPath;
@@ -322,4 +318,3 @@ exports.setStorage = setStorage;
 exports.getConnectedDevices = getConnectedDevices;
 exports.getMobileProjectPath = getMobileProjectPath;
 exports.getWebProjectPath = getWebProjectPath;
-exports.getWakandaServerProjectPort = getWakandaServerProjectPort;
