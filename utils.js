@@ -294,19 +294,6 @@ function getConnectedDevices() {
     return devices;
 }
 
-function getWakandaServerProjectPort() {
-   // parse Wakanda project settings and get port
-    var solutionPath = studio.currentSolution.getSolutionFile().parent.parent.path,
-        projectName = getSelectedProjectName(),
-        regex = /<http .* port="(\d+)"/m;
-
-    var settings = File(solutionPath + '/' + projectName + '/backend/settings.waSettings').toString();
-    var match = regex.exec(settings);
-    
-    return match.length > 1 ? match[1] : 8081;
-}
-
-
 exports.printConsole = printConsole;
 exports.getMessageString = getMessageString;
 exports.getSelectedProjectPath = getSelectedProjectPath;
@@ -322,4 +309,3 @@ exports.setStorage = setStorage;
 exports.getConnectedDevices = getConnectedDevices;
 exports.getMobileProjectPath = getMobileProjectPath;
 exports.getWebProjectPath = getWebProjectPath;
-exports.getWakandaServerProjectPort = getWakandaServerProjectPort;
