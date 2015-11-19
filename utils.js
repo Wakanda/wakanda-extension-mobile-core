@@ -267,10 +267,19 @@ function getConnectedDevices() {
         try {
             output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPhone' });
             devices.ios.connected = /iPhone/.test(output);
-            devices.ios.push('iPhone');
         } catch(e) {
             studio.log(e.message);
         }
+
+        if(! devices.ios.connected) {
+            try {
+                output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPad' });
+                devices.ios.connected = /iPad/.test(output);            
+            } catch(e) {
+                studio.log(e.message);
+            }
+        }
+        devices.ios.push('iOS');
     }
 
     // check for the android device
