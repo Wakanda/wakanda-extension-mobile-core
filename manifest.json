@@ -27,6 +27,13 @@
                 "trigger": [
                     { "event": "onServerConnect" }
                 ]
+            },
+            {
+                "name": "handleOnServerStartAbort",
+                "title": "handle onStartServerAbort event",
+                "trigger": [
+                    { "event": "onServerStartAbort" }
+                ]
             }
         ],
         "lifetime": "application_lifetime"
