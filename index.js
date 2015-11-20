@@ -826,8 +826,7 @@ actions.updateIonicConfig = function(message) {
 
 actions.launchWebPreview = function(message) {
     var config = message.params,
-        projectName = utils.getSelectedProjectName(),
-        projectPath = utils.getWebProjectPath();
+        projectName = utils.getSelectedProjectName();
 
     // if no (or more than one) project is selected
     if (!projectName) {
@@ -852,6 +851,18 @@ actions.launchWebPreview = function(message) {
         fireEvent('webRunWaitConnectToServer');
         studio.sendCommand('StartWakandaServer');
     }
+};
+
+actions.handleOnServerStartAbort = function(message) {
+    var storage = utils.getStorage('waitingServerConnect');
+
+    if (! storage.waiting) {
+        return;
+    }
+
+    fireEvent('startServerAborted');
+
+    utils.setStorage('waitingServerConnect', {waiting: false }); 
 };
 
 actions.handleServerConnect = function(message) {
