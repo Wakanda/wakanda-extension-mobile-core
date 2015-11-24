@@ -969,7 +969,7 @@ function webPreview(webStudioPreview) {
                         studio.showMessageOnStatusBar('npm modules installed.');
                     } else {
                         _display(webStudioPreview);
-                        studio.showMessageOnStatusBar('npm modules installation exited with erros.');
+                        studio.showMessageOnStatusBar('npm modules installation exited with errors.');
                     }
                 }
             };
