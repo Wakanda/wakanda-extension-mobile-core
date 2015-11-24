@@ -4,12 +4,7 @@ iframe {
 
 }
 
-.android-ios {
-    width: 100%;
-    height: 100%;
-}
-
-#ionic-iframe {
+#webapp-iframe, #ionic-iframe, .android-ios {
     width: 100%;
     height: 100%;
 }
@@ -20,4 +15,26 @@ html, body {
     margin: 0;
     padding: 0;
     overflow-y: hidden;
+}
+
+.btn-wrapper {
+    height: 31px;
+    background-color: rgb(250, 250, 250);
+    border-bottom: solid 1px #cdcdcd;
+}
+
+.btn {
+    cursor: pointer;
+    display: inline-block;
+    /*background-size: auto;*/
+    background-position: center center;
+    background-repeat: no-repeat;
+    margin: 8px;
+}
+
+.btn-reload {
+    background-image: url(./../icons/refresh.png);
+    background-size: contain;
+    width: 14px;
+    height: 14px;
 }
