@@ -2,6 +2,11 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var params = parseStudioTabUrl(),
         iframe = document.getElementById('ionic-iframe');
 
+    // reload button
+    document.getElementById('reload').addEventListener('click', function(e) {
+        iframe.contentWindow.location.reload(true);
+    });
+
     if(! params.url) {
         return;
     }

@@ -1007,8 +1007,8 @@ function webPreview(webStudioPreview) {
         var url = livereload ? 'http://127.0.0.1:' + options.connectPort + '/' : options.serverUrl;
 
         if (webStudioPreview) {
-            studio.extension.registerTabPage(url, 'icons/app.png', 'Web App');
-            studio.extension.openPageInTab(url, 'Web App');
+            studio.extension.registerTabPage('html/webapp.html', 'icons/app.png', 'Web App');
+            studio.extension.openPageInTab('html/webapp.html', 'Web App', false, false, false, '', 'url=' + url);
         } else {
             utils.executeAsyncCmd({
                 cmd: os.isWindows ? 'start ' + url : 'open ' + url
