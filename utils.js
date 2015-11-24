@@ -8,14 +8,6 @@ function getPaths() {
         return paths;
     }
     
-    // default paths
-    paths = paths.concat([
-        '/usr/local/bin',
-        '/usr/libexec/java_home/bin',
-        '/usr/local/opt/android-sdk/platform-tools',
-        '/usr/local/opt/android-sdk/tools'
-    ]);
-
     // user preferences paths
     var environmentVariablePath = studio.getPreferences('environmentVariablePath') || '';
     environmentVariablePath.split("\n").forEach(function(path) {
@@ -23,6 +15,14 @@ function getPaths() {
             paths.push(path.trim());
         }
     });
+
+    // default paths
+    paths = paths.concat([
+        '/usr/local/bin',
+        '/usr/libexec/java_home/bin',
+        '/usr/local/opt/android-sdk/platform-tools',
+        '/usr/local/opt/android-sdk/tools'
+    ]);
 
     return paths;
 }
