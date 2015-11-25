@@ -521,7 +521,7 @@ actions.launchRun = function (message) {
             updateStatus('device_' + platform + '_' + device.id, true);
 
             var cmd = {
-                cmd: (platform === 'android' ? 'ionic run --livereload  --target=' + device.id + ' android' : 'ionic run --livereload --device ios'),
+                cmd: (platform === 'android' ? 'ionic run -slc -device android --target=' + device.id : 'ionic run -slc --device ios'),
                 path: utils.getMobileProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({
@@ -532,12 +532,18 @@ actions.launchRun = function (message) {
                         }
                     });
 
-                    var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
+                    var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : (/RUN SUCCEEDED/.test(msg) || /^success/.test(msg));
                     if (started) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Application started in the device ' + platformName);
                         updateStatus('device_' + platform + '_' + device.id, false);
-                    } else if (!/Ionic server commands, enter:/.test(msg)) {
+
+                    } else if(/process launch failed/.test(msg)) {
+                        studio.hideProgressBarOnStatusBar();
+                        studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + (device.id || ''));
+                        updateStatus('device_' + platform + '_' + device.id, false);
+
+                    } else if(!/No Content-Security-Policy meta tag found/.test(msg) && !/Ionic server commands, enter:/.test(msg)) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
                     }
@@ -547,7 +553,7 @@ actions.launchRun = function (message) {
                 },
                 onerror: function(msg) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + device.id);
+                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' device ' + (device.id || ''));
                     updateStatus('device_' + platform + '_' + device.id, false);
                 }
             };
