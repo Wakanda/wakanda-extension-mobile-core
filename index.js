@@ -472,7 +472,7 @@ actions.launchRun = function (message) {
         updateStatus('emulator_' + platform, true);
 
         var cmd = {
-            cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --port 8101 --livereload-port 35730'),
+            cmd: (platform === 'android' ? 'ionic emulate android --livereload --port 8100 --livereload-port 35729' : 'ionic emulate ios --livereload --address 127.0.0.1 --port 8101 --livereload-port 35730'),
             path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
