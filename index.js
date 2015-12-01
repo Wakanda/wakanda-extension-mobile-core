@@ -231,15 +231,15 @@ actions.launchTest = function (message) {
     if (serverStatus) {
         test(config);
     } else {
-        utils.setStorage({
-			name: 'waitingServerConnect',
+		utils.setStorage({
+		name: 'waitingServerConnect',
 			value: {
-			    waiting: true,
-			    callback:"test",
-			    params: config,
-			    dateTime: new Date().getTime()
+				waiting: true,
+				callback:"test",
+				params: config,
+				dateTime: new Date().getTime()
 			}
-        });
+		});
 
         studio.sendCommand('StartWakandaServer');
     }
@@ -372,6 +372,26 @@ actions.launchRun = function (message) {
     if (!checkProject()) {
         return;
     }
+    // check if server is connected, else start it
+    var serverStatus = studio.isCommandChecked('startWakandaServer');
+    if (serverStatus) {
+        run(message);
+    } else {
+		utils.setStorage({
+		name: 'waitingServerConnect',
+			value: {
+				waiting: true,
+				callback: "run",
+				params: message,
+				dateTime: new Date().getTime()
+			}
+		});
+
+        studio.sendCommand('StartWakandaServer');
+    }
+};
+
+function run(message) {
 
     if (currentOs === 'windows' && ! status['Android SDK']) {
         utils.printConsole({
@@ -914,11 +934,14 @@ actions.handleServerConnect = function(message) {
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
 	    var TaskName = "";
 		switch(storage.callback){
-	        case  "webPreview":
+			case  "webPreview":
 				TaskName = "Running web";
 				break;
-	         case  "test":
+			case  "test":
 				TaskName = "Testing mobile";
+				break;
+			case "run":
+				TaskName = "Running mobile";
 				break;
 	     }
         utils.printConsole({
@@ -935,10 +958,11 @@ actions.handleServerConnect = function(message) {
 	    case  "test":
 			test(storage.params);
 			break;
-	
+		case "run":
+			run(storage.params);
+			break;
 	}
 	
-
 };
 
 function webPreview(webStudioPreview) {
