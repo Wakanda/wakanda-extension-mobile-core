@@ -226,19 +226,19 @@ actions.launchTest = function (message) {
         return;
     }
 	
-	    // check if server is connected, else start it
+	// check if server is connected, else start it
     var serverStatus = studio.isCommandChecked('startWakandaServer');
     if (serverStatus) {
         test(config);
     } else {
         utils.setStorage({
-            name: 'waitingServerConnect',
-            value: {
-                waiting: true,
+			name: 'waitingServerConnect',
+			value: {
+				waiting: true,
 				callback:"test",
-                params: config,
-                dateTime: new Date().getTime()
-            }
+				params: config,
+				dateTime: new Date().getTime()
+			}
         });
 
         studio.sendCommand('StartWakandaServer');
@@ -914,27 +914,27 @@ actions.handleServerConnect = function(message) {
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
 	    var TaskName = "";
 		switch(storage.callback){
-	           case  "webPreview":
-	           TaskName = "Running web";
-		       break;
-	           case  "test":
-	           TaskName = "Testing mobile";
-		       break;
+	        case  "webPreview":
+				TaskName = "Running web";
+				break;
+	         case  "test":
+				TaskName = "Testing mobile";
+				break;
 	     }
         utils.printConsole({
             type: 'ERROR',
-            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, '+ TaskName +' action is cancelled.'
+            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + TaskName + ' action is cancelled.'
         });
         return;
     }
 	
     switch(storage.callback){
-	     case  "webPreview":
-	     webPreview(storage.params);
-		 break;
-	     case  "test":
-	     test(storage.params);
-		 break;
+		case  "webPreview":
+			webPreview(storage.params);
+			break;
+	    case  "test":
+			test(storage.params);
+			break;
 	
 	}
 	
