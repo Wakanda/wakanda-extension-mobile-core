@@ -212,12 +212,8 @@ actions.checkDependencies = function () {
 actions.launchTest = function (message) {
     "use strict";
 
-    var config = message.params,
-        projectName = utils.getSelectedProjectName(),
-        port,
-        serverLaunched = false,
-        browserPreviewed = false;
-
+    var config = message.params;
+ 
     if (! checkProject()) {
         return;
     }
@@ -229,6 +225,34 @@ actions.launchTest = function (message) {
         });
         return;
     }
+	
+	    // check if server is connected, else start it
+    var serverStatus = studio.isCommandChecked('startWakandaServer');
+    if (serverStatus) {
+        test(config);
+    } else {
+        utils.setStorage({
+            name: 'waitingServerConnect',
+            value: {
+                waiting: true,
+				callback:"test",
+                params: config,
+                dateTime: new Date().getTime()
+            }
+        });
+
+        studio.sendCommand('StartWakandaServer');
+    }
+
+    
+};
+
+function test(config) {
+
+    var projectName = utils.getSelectedProjectName(),
+          port,
+          serverLaunched = false,
+          browserPreviewed = false;
 
     var opt = {
         'android-ios': {
@@ -849,7 +873,8 @@ actions.launchWebPreview = function(message) {
             name: 'waitingServerConnect',
             value: {
                 waiting: true,
-                webStudioPreview: config.webStudioPreview,
+				callback:"webPreview",
+                params: config.webStudioPreview,
                 dateTime: new Date().getTime()
             }
         });
@@ -878,7 +903,7 @@ actions.handleServerConnect = function(message) {
     if (!storage.waiting) {
         return;
     }
-
+ 
     fireEvent('webRunConnectedToServer');
 
     utils.setStorage('waitingServerConnect', {
@@ -887,14 +912,33 @@ actions.handleServerConnect = function(message) {
 
     // if server is not launched after 2 minutes, do nothing !
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
+	    var TaskName = "";
+		switch(storage.callback){
+	           case  "webPreview":
+	           TaskName = "Running web";
+		       break;
+	           case  "test":
+	           TaskName = "Testing mobile";
+		       break;
+	     }
         utils.printConsole({
             type: 'ERROR',
-            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, Running web action is cancelled.'
+            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, '+ TaskName +' action is cancelled.'
         });
         return;
     }
+	
+    switch(storage.callback){
+	     case  "webPreview":
+	     webPreview(storage.params);
+		 break;
+	     case  "test":
+	     test(storage.params);
+		 break;
+	
+	}
+	
 
-    webPreview(storage.webStudioPreview);
 };
 
 function webPreview(webStudioPreview) {
