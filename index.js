@@ -231,15 +231,15 @@ actions.launchTest = function (message) {
     if (serverStatus) {
         test(config);
     } else {
-		utils.setStorage({
-		name: 'waitingServerConnect',
-			value: {
-				waiting: true,
-				callback:"test",
-				params: config,
-				dateTime: new Date().getTime()
-			}
-		});
+        utils.setStorage({
+        name: 'waitingServerConnect',
+            value: {
+                waiting: true,
+                callback:"test",
+                params: config,
+                dateTime: new Date().getTime()
+            }
+        });
 
         studio.sendCommand('StartWakandaServer');
     }
@@ -377,15 +377,15 @@ actions.launchRun = function (message) {
     if (serverStatus) {
         run(message);
     } else {
-		utils.setStorage({
-		name: 'waitingServerConnect',
-			value: {
-				waiting: true,
-				callback: "run",
-				params: message,
-				dateTime: new Date().getTime()
-			}
-		});
+        utils.setStorage({
+        name: 'waitingServerConnect',
+            value: {
+                waiting: true,
+                callback: "run",
+                params: message,
+                dateTime: new Date().getTime()
+            }
+        });
 
         studio.sendCommand('StartWakandaServer');
     }
@@ -893,7 +893,7 @@ actions.launchWebPreview = function(message) {
             name: 'waitingServerConnect',
             value: {
                 waiting: true,
-				callback:"webPreview",
+                callback:"webPreview",
                 params: config.webStudioPreview,
                 dateTime: new Date().getTime()
             }
@@ -934,16 +934,16 @@ actions.handleServerConnect = function(message) {
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
 	    var TaskName = "";
 		switch(storage.callback){
-			case  "webPreview":
-				TaskName = "Running web";
-				break;
-			case  "test":
-				TaskName = "Testing mobile";
-				break;
-			case "run":
-				TaskName = "Running mobile";
-				break;
-	     }
+            case  "webPreview":
+                TaskName = "Running web";
+                break;
+            case  "test":
+                TaskName = "Testing mobile";
+                break;
+            case "run":
+                TaskName = "Running mobile";
+                break;
+        }
         utils.printConsole({
             type: 'ERROR',
             message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + TaskName + ' action is cancelled.'
@@ -952,16 +952,16 @@ actions.handleServerConnect = function(message) {
     }
 	
     switch(storage.callback){
-		case  "webPreview":
-			webPreview(storage.params);
-			break;
-	    case  "test":
-			test(storage.params);
-			break;
-		case "run":
-			run(storage.params);
-			break;
-	}
+        case  "webPreview":
+            webPreview(storage.params);
+            break;
+        case  "test":
+            test(storage.params);
+            break;
+        case "run":
+            run(storage.params);
+            break;
+    }
 	
 };
 
