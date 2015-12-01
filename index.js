@@ -226,7 +226,7 @@ actions.launchTest = function (message) {
         return;
     }
 	
-	// check if server is connected, else start it
+    // check if server is connected, else start it
     var serverStatus = studio.isCommandChecked('startWakandaServer');
     if (serverStatus) {
         test(config);
@@ -234,10 +234,10 @@ actions.launchTest = function (message) {
         utils.setStorage({
 			name: 'waitingServerConnect',
 			value: {
-				waiting: true,
-				callback:"test",
-				params: config,
-				dateTime: new Date().getTime()
+			    waiting: true,
+			    callback:"test",
+			    params: config,
+			    dateTime: new Date().getTime()
 			}
         });
 
