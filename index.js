@@ -932,8 +932,8 @@ actions.handleServerConnect = function(message) {
 
     // if server is not launched after 2 minutes, do nothing !
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
-	    var TaskName = "";
-		switch(storage.callback){
+        var TaskName = "";
+        switch(storage.callback){
             case  "webPreview":
                 TaskName = "Running web";
                 break;
