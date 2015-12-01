@@ -905,10 +905,11 @@ function webPreview(webStudioPreview) {
         options = {
             connectPort: 8000,
             serverUrl: studio.getProjectURL()
-        };
+        },
+        appFolder = studio.File(projectPath + '/app/index.html').exists;
     
 
-    if(! studio.Folder(utils.getSelectedProjectPath() + '/web/').exists || ! studio.File(projectPath + '/app/index.html').exists) {
+    if(! studio.Folder(utils.getSelectedProjectPath() + '/web/').exists || ! appFolder) {
         // default behavior, for prototyper and Wakanda scaffolding project < WAK11
         _display(false);
         return;
@@ -1011,6 +1012,12 @@ function webPreview(webStudioPreview) {
 
     function _display(livereload) {
         var url = livereload ? 'http://127.0.0.1:' + options.connectPort + '/' : options.serverUrl;
+
+        // to fix cache redirection page when opening pages in Tab in Studio
+        // open app/index.html instead of index.html
+        if(appFolder && ! livereload) {
+            url = url + '/app/';
+        }
 
         if (webStudioPreview) {
             studio.extension.registerTabPage('html/webapp.html', 'icons/app.png', 'Web App');
