@@ -968,7 +968,7 @@ actions.handleServerConnect = function(message) {
 
         utils.printConsole({
             type: 'ERROR',
-            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + tasks[storage.callback].TaskName + ' action is cancelled.'
+            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + tasks[storage.callback].taskName + ' action is cancelled.'
         });
         return;
     }
