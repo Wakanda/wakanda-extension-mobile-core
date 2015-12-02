@@ -240,7 +240,7 @@ actions.launchTest = function (message) {
                 dateTime: new Date().getTime()
             }
         });
-
+        fireEvent('mobileTestWaitConnectToServer');
         studio.sendCommand('StartWakandaServer');
     }
 
@@ -386,7 +386,7 @@ actions.launchRun = function (message) {
                 dateTime: new Date().getTime()
             }
         });
-
+        fireEvent('mobileRunWaitConnectToServer');
         studio.sendCommand('StartWakandaServer');
     }
 };
@@ -924,7 +924,7 @@ actions.handleServerConnect = function(message) {
         return;
     }
  
-    fireEvent('webRunConnectedToServer');
+    
 
     utils.setStorage('waitingServerConnect', {
         waiting: false
@@ -933,15 +933,18 @@ actions.handleServerConnect = function(message) {
     var tasks = {
 		webPreview: {
 			taskName: 'Running web',
-			action: webPreview
+			action: webPreview,
+			event: 'webRunConnectedToServer'
 			},
 		test: {
 			taskName: 'Testing mobile',
-			action: test
+			action: test,
+			event: 'mobileTestConnectedToServer'
 			},
 		run: {
 			taskName: 'Running mobile',
-			action: run
+			action: run,
+			event: 'mobileRunConnectedToServer'
 			}
     };
 	
@@ -957,6 +960,8 @@ actions.handleServerConnect = function(message) {
 
 		return;
 	}
+	
+	fireEvent(tasks[storage.callback].event);
 	
     // if server is not launched after 2 minutes, do nothing !
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
