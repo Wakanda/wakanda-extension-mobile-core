@@ -930,8 +930,7 @@ actions.handleServerConnect = function(message) {
         waiting: false
     });
 	
-	
-	var tasks = {
+    var tasks = {
 		webPreview: {
 			taskName: 'Running web',
 			action: webPreview
@@ -944,7 +943,8 @@ actions.handleServerConnect = function(message) {
 			taskName: 'Running mobile',
 			action: run
 			}
-		};
+    };
+	
 	if(! storage.callback) {
 		return;
 	}
@@ -960,47 +960,16 @@ actions.handleServerConnect = function(message) {
 	
     // if server is not launched after 2 minutes, do nothing !
     if (new Date().getTime() - storage.dateTime > timeout * 60 * 1000) {
-<<<<<<< HEAD
 
         utils.printConsole({
             type: 'ERROR',
             message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + tasks[storage.callback].TaskName + ' action is cancelled.'
-=======
-        var TaskName = "";
-        switch(storage.callback){
-            case  "webPreview":
-                TaskName = "Running web";
-                break;
-            case  "test":
-                TaskName = "Testing mobile";
-                break;
-            case "run":
-                TaskName = "Running mobile";
-                break;
-        }
-        utils.printConsole({
-            type: 'ERROR',
-            message: 'Waiting to connect to solution server exceeds ' + timeout + ' seconds, ' + TaskName + ' action is cancelled.'
->>>>>>> e557e4eb0ba0902f6e7397a1694d5fe15e2dfc49
         });
         return;
     }
 	
-<<<<<<< HEAD
 	tasks[storage.callback].action(storage.params);
-=======
-    switch(storage.callback){
-        case  "webPreview":
-            webPreview(storage.params);
-            break;
-        case  "test":
-            test(storage.params);
-            break;
-        case "run":
-            run(storage.params);
-            break;
-    }
->>>>>>> e557e4eb0ba0902f6e7397a1694d5fe15e2dfc49
+
 	
 };
 
