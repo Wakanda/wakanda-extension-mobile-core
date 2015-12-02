@@ -2,9 +2,14 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var params = parseStudioTabUrl(),
         iframe = document.getElementById('ionic-iframe');
 
+    // to call it viastudio.sendExtensionWebZoneCommand
+    window.reloadIframe = function(){
+      iframe.contentWindow.location.reload(true);
+    }
+
     // reload button
     document.getElementById('reload').addEventListener('click', function(e) {
-        iframe.contentWindow.location.reload(true);
+        window.reloadIframe();
     });
 
     if(! params.url) {
