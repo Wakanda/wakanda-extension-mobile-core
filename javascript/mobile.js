@@ -6,9 +6,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
     window.reloadIframes = function(){
         var ionicDocument = iframe.contentWindow.document;
         var frames        = ionicDocument.getElementsByClassName("frame");
-        Array.prototype.forEach.call(frames, function(frame){
-            frame.contentWindow.location.reload(true);
-        });
+        if(frames.length === 0){
+          iframe.contentWindow.location.reload(true);
+        }else{
+          Array.prototype.forEach.call(frames, function(frame){
+              frame.contentWindow.location.reload(true);
+          });
+        }
     }
 
     // reload button
