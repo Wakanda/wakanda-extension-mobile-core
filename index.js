@@ -360,7 +360,7 @@ function test(config) {
                 }
 
                 if(currentOs == 'windows' && msg.indexOf(' changed') !== -1){
-                  studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframe');
+                  studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframes');
                 }
             },
             onterminated: function (msg) {}
