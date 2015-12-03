@@ -358,6 +358,10 @@ function test(config) {
                     browserPreviewed = true;
                     _browserDisplay();
                 }
+
+                if(currentOs == 'windows' && msg.indexOf(' changed') !== -1){
+                  studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframes');
+                }
             },
             onterminated: function (msg) {}
         };
