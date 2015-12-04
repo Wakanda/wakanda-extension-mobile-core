@@ -358,6 +358,10 @@ function test(config) {
                     browserPreviewed = true;
                     _browserDisplay();
                 }
+
+                if(currentOs == 'windows' && msg.indexOf(' changed') !== -1){
+                  studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframes');
+                }
             },
             onterminated: function (msg) {}
         };
@@ -1039,6 +1043,12 @@ function webPreview(webStudioPreview) {
         if (! status.Node || ! status.Gulp || ! studio.File(projectPath + '/gulpfile.js').exists || ! studio.File(projectPath + '/package.json').exists) {
             _display(false);
 
+        } else if(utils.checkInstalledNodeModules()) { // node modules are installed
+            _launchGulp();
+
+        } else if(! utils.isOnline()) { // no internet connection
+            _display(false);
+
         } else { // launch livereload using node
             // install node modules
             fireEvent('webInstallingNpmModules');
@@ -1056,7 +1066,7 @@ function webPreview(webStudioPreview) {
                         _launchGulp();
                         studio.showMessageOnStatusBar('npm modules installed.');
                     } else {
-                        _display(webStudioPreview);
+                        _display(false);
                         studio.showMessageOnStatusBar('npm modules installation exited with errors.');
                     }
                 }

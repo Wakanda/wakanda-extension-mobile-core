@@ -2,9 +2,22 @@ document.addEventListener('DOMContentLoaded', function(e) {
     var params = parseStudioTabUrl(),
         iframe = document.getElementById('ionic-iframe');
 
+    // to call it via studio.sendExtensionWebZoneCommand
+    window.reloadIframes = function(){
+        var ionicDocument = iframe.contentWindow.document;
+        var frames        = ionicDocument.getElementsByClassName("frame");
+        if(frames.length === 0){
+          iframe.contentWindow.location.reload(true);
+        }else{
+          Array.prototype.forEach.call(frames, function(frame){
+              frame.contentWindow.location.reload(true);
+          });
+        }
+    }
+
     // reload button
     document.getElementById('reload').addEventListener('click', function(e) {
-        iframe.contentWindow.location.reload(true);
+        window.reloadIframes();
     });
 
     if(! params.url) {
