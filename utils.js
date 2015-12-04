@@ -304,19 +304,7 @@ function getConnectedDevices() {
 }
 
 function isOnline() {
-    /*var cmd = {
-        cmd: os.isWindows ? 'ping -n 2 -w 500 8.8.8.8' : 'ping -c 2 -W 500 8.8.8.8'
-    };
     try {
-        var output = executeSyncCmd(cmd);
-        return os.isWindows ? /0\.0% packet loss/.test(output) : /0\.0% packet loss/.test(output);
-    } catch(e) {
-        studio.log('Error when executing command : ' + JSON.stringify((cmd)));
-        studio.log('Error message : ' + JSON.stringify((e)));
-        return false;
-    }*/
-    try {
-        
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "http://www.msftncsi.com/ncsi.txt", false);
         xhr.send();
