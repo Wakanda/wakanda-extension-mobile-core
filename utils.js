@@ -303,6 +303,60 @@ function getConnectedDevices() {
     return devices;
 }
 
+function isOnline() {
+    /*var cmd = {
+        cmd: os.isWindows ? 'ping -n 2 -w 500 8.8.8.8' : 'ping -c 2 -W 500 8.8.8.8'
+    };
+    try {
+        var output = executeSyncCmd(cmd);
+        return os.isWindows ? /0\.0% packet loss/.test(output) : /0\.0% packet loss/.test(output);
+    } catch(e) {
+        studio.log('Error when executing command : ' + JSON.stringify((cmd)));
+        studio.log('Error message : ' + JSON.stringify((e)));
+        return false;
+    }*/
+    try {
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "http://www.msftncsi.com/ncsi.txt", false);
+        xhr.send();
+        return true;
+    } catch(e) {
+        return false;
+    };
+}
+
+function checkInstalledNodeModules() {
+    var installed = true,
+        path = getWebProjectPath(),
+        file = File(path + '/package.json');
+
+
+    try {
+        if(! file.exists) {
+            return false;
+        }
+
+        var packageJson = JSON.parse(file.toString());
+
+        var dependencies = Object.keys(packageJson.devDependencies || {});
+        dependencies = dependencies.concat(Object.keys(packageJson.dependencies || {}));
+
+        dependencies.forEach(function(module) {
+            if( ! installed) {
+                return;
+            }
+            if(! Folder(path + '/node_modules/' + module).exists) {
+                installed = false;
+            }
+        });
+        return installed;
+    } catch(e) {
+        studio.log('error : ' + e);
+        return false;
+    }
+}
+
 exports.printConsole = printConsole;
 exports.getMessageString = getMessageString;
 exports.getSelectedProjectPath = getSelectedProjectPath;
@@ -318,3 +372,5 @@ exports.setStorage = setStorage;
 exports.getConnectedDevices = getConnectedDevices;
 exports.getMobileProjectPath = getMobileProjectPath;
 exports.getWebProjectPath = getWebProjectPath;
+exports.isOnline = isOnline;
+exports.checkInstalledNodeModules = checkInstalledNodeModules;
