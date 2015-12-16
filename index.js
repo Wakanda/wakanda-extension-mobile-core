@@ -396,6 +396,9 @@ actions.launchRun = function (message) {
 };
 
 function run(message) {
+    var params = message.params,
+        running = {},
+        tasks = [];
 
     if (currentOs === 'windows' && ! status['Android SDK']) {
         utils.printConsole({
@@ -418,52 +421,72 @@ function run(message) {
         return;
     }
 
-    var running = {};
-    ['android', 'ios'].forEach(function (platform) {
-
-        if (message.params.emulator[platform] || message.params.device[platform]) {
-
-            // add the platform
-            // and when terminated, launch emulate
-            var cmd = {
-                cmd: 'ionic platform add ' + platform,
-                path: utils.getMobileProjectPath(),
-                onterminated: function(msg) {
-
-                    updateStatus('addingPlatform_' + platform, false);
-
-                    studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
-
-                    // check network interfaces and set ionic config to right address if necessary
-                    checkInterface();
-
-                    // add plugins and launch run or emulate
-                    addPlugins({
-                        pluginName: 'whitelist',
-                        url: 'https://github.com/apache/cordova-plugin-whitelist.git',
-                        onterminated: function() {
-                            if (message.params.emulator[platform]) {
-                                emulate(platform);
-                            }
-
-                            if (message.params.device[platform]) {
-                                run(platform);
-                            }
-                        }
-                    });
-                }
-            };
-
-            studio.hideProgressBarOnStatusBar();
-            studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
-            updateStatus('addingPlatform_' + platform, true);
-            utils.executeAsyncCmd(cmd);
+    ['android', 'ios'].forEach(function(platform) {
+        if(params.emulator[platform] || params.device[platform]) {
+            tasks.push({ callback: addPlaform, params: platform });
         }
     });
 
+    if(! tasks.length) {
+        return;
+    }
+
+    tasks.push({ callback: checkInterface });
+
+    tasks.push({ callback: addPlugins, params: { url: 'https://github.com/apache/cordova-plugin-whitelist.git', pluginName: 'whitelist' } });
+
+    tasks.push({ callback: function() {
+        var both2Platforms = (params.emulator.android || params.device.android) && (params.emulator.ios || params.device.ios);
+        ['android', 'ios'].forEach(function(platform) {
+            if(params.emulator[platform]) {
+                emulate(platform);
+            }
+
+            if(params.device[platform]) {
+                run(platform);
+            }
+
+            if(both2Platforms) {
+                both2Platforms = false;
+                wait(1500);
+            }
+        });
+    }});
+
+    tasker();
+
+    function tasker() {
+        if(! tasks.length) {
+            return;
+        }
+
+        var task = tasks.shift();
+        task.callback.apply(task, task.params instanceof Array ? task.params : [ task.params ]);
+    }
+
+    function addPlaform(platform) {
+        // add the platform
+        var cmd = {
+            cmd: 'ionic platform add ' + platform,
+            path: utils.getMobileProjectPath(),
+            onterminated: function(msg) {
+
+                updateStatus('addingPlatform_' + platform, false);
+
+                studio.hideProgressBarOnStatusBar();
+                studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
+
+                tasker();
+            }
+        };
+
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
+        updateStatus('addingPlatform_' + platform, true);
+        utils.executeAsyncCmd(cmd);
+    }
+
     function addPlugins(plugin) {
-        // adding whilelist plugins
         var cmd = {
             cmd: 'ionic plugin add ' + plugin.url,
             path: utils.getMobileProjectPath(),
@@ -473,9 +496,7 @@ function run(message) {
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Cordova ' + plugin.pluginName + ' is added.');
 
-                if(plugin.onterminated) {
-                    plugin.onterminated.call();
-                }
+                tasker();
             }
         };
 
@@ -615,6 +636,7 @@ function run(message) {
         var addresses = getAddresses();
 
         if (addresses.length < 2) {
+            tasker();
             return;
         }
 
@@ -647,6 +669,8 @@ function run(message) {
                 blob.copyTo(path, 'OverWrite');
             }
         }
+
+        tasker();
     }
 
     function getAddresses() {
@@ -757,7 +781,8 @@ actions.launchBuild = function(message) {
         buildingError = {
             android: false,
             ios: false
-        };
+        },
+        tasks = [];
 
     function updateStatus(key, value) {
         building[key] = value;
@@ -775,7 +800,16 @@ actions.launchBuild = function(message) {
             });
         }
     }
+	
+    function tasker() {
+        if(! tasks.length) {
+            return;
+        }
 
+        var task = tasks.shift();
+        task.callback.apply(task, task.params instanceof Array ? task.params : [ task.params ]);
+    }
+	
     // launch the build after adding the platform
     function build(platform) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
@@ -835,10 +869,9 @@ actions.launchBuild = function(message) {
         utils.executeAsyncCmd(cmd);
     }
 
-    ['android', 'ios'].forEach(function(platform) {
-        if (!message.params[platform]) {
-            return;
-        }
+
+	
+    function addPlaformAndBuild(platform) {
 
         updateStatus(platform, true);
         var cmd = {
@@ -846,6 +879,7 @@ actions.launchBuild = function(message) {
             path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 build(platform);
+                tasker();
             },
             onerror: function(msg) {
                 if (!/Platform (ios|android) already added/.test(msg)) {
@@ -862,7 +896,15 @@ actions.launchBuild = function(message) {
         studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Adding platform ' + platform + '.');
         utils.executeAsyncCmd(cmd);
+    };
+	
+    ['android', 'ios'].forEach(function(platform) {
+        if (message.params[platform]) {
+            tasks.push({ callback: addPlaformAndBuild, params: platform });
+        } 
     });
+    
+    tasker();
 };
 
 actions.openBuildFolder = function(message) {
