@@ -152,10 +152,7 @@ actions.checkDependencies = function () {
                 var valid = !check.validationCallback || check.validationCallback(msg);
                 status[check.title] = valid;
 
-                utils.setStorage({
-                    name: 'checks',
-                    value: status
-                });
+                utils.setStorage({ name: 'checks', value: status });
 
                 if (valid) {
                     utils.printConsole({
@@ -173,10 +170,7 @@ actions.checkDependencies = function () {
             onerror: function (msg) {
                 status[check.title] = false;
 
-                utils.setStorage({
-                    name: 'checks',
-                    value: status
-                });
+                utils.setStorage({ name: 'checks', value: status });
 
                 utils.printConsole({
                     message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
@@ -188,10 +182,7 @@ actions.checkDependencies = function () {
                 if (typeof status[check.title] === 'undefined') {
                     status[check.title] = false;
 
-                    utils.setStorage({
-                        name: 'checks',
-                        value: status
-                    });
+                    utils.setStorage({ name: 'checks', value: status });
 
                     utils.printConsole({
                         message: check.title + ': {%span class="' + (check.mandatory ? 'red' : 'orange') + '"%}Not found{%/span%}' + troubleshootingText,
@@ -290,13 +281,11 @@ function test(config) {
     };
 
     var _browserDisplay = function () {
-
         var command = {
             cmd: os.isWindows ? 'start ' + _getUrl() : "open " + _getUrl()
         };
 
         utils.executeAsyncCmd(command);
-
     };
 
     var _studioDisplay = function () {
@@ -333,26 +322,14 @@ function test(config) {
         }
 
         // save the launched ionic services
-        utils.setStorage({
-            name: 'services',
-            key: projectName,
-            value: {
-                port: port
-            }
-        });
+        utils.setStorage({ name: 'services', key: projectName, value: {  port: port } });
 
         var command = {
             cmd: 'ionic serve --address 127.0.0.1 --nobrowser --port ' + port,
             path: utils.getMobileProjectPath(),
             onmessage: function (msg) {
                 // save the pid of the process    
-                utils.setStorage({
-                    name: 'services',
-                    key: projectName,
-                    value: {
-                        pid: worker._systemWorker.getInfos().pid
-                    }
-                });
+                utils.setStorage({ name: 'services', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });
 
                 if (config.browserPreview && !browserPreviewed) {
                     browserPreviewed = true;
@@ -396,6 +373,17 @@ actions.launchRun = function (message) {
 };
 
 function run(message) {
+    var params = message.params,
+        running = {},
+        tasks = [],
+        platforms = [];
+
+
+    ['android', 'ios'].forEach(function(platform) {
+        if(params.emulator[platform] || params.device[platform]) {
+            platforms.push(platform);
+        }
+    });
 
     if (currentOs === 'windows' && ! status['Android SDK']) {
         utils.printConsole({
@@ -418,52 +406,70 @@ function run(message) {
         return;
     }
 
-    var running = {};
-    ['android', 'ios'].forEach(function (platform) {
+    
+    if(! platforms.length) {
+        return;
+    }
 
-        if (message.params.emulator[platform] || message.params.device[platform]) {
-
-            // add the platform
-            // and when terminated, launch emulate
-            var cmd = {
-                cmd: 'ionic platform add ' + platform,
-                path: utils.getMobileProjectPath(),
-                onterminated: function(msg) {
-
-                    updateStatus('addingPlatform_' + platform, false);
-
-                    studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
-
-                    // check network interfaces and set ionic config to right address if necessary
-                    checkInterface();
-
-                    // add plugins and launch run or emulate
-                    addPlugins({
-                        pluginName: 'whitelist',
-                        url: 'https://github.com/apache/cordova-plugin-whitelist.git',
-                        onterminated: function() {
-                            if (message.params.emulator[platform]) {
-                                emulate(platform);
-                            }
-
-                            if (message.params.device[platform]) {
-                                run(platform);
-                            }
-                        }
-                    });
-                }
-            };
-
-            studio.hideProgressBarOnStatusBar();
-            studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
-            updateStatus('addingPlatform_' + platform, true);
-            utils.executeAsyncCmd(cmd);
+    platforms.forEach(function(platform) {
+        if(params.emulator[platform] || params.device[platform]) {
+            tasks.push({ callback: addPlaform, params: platform });
         }
     });
 
+    tasks.push({ callback: checkInterface });
+
+    tasks.push({ callback: addPlugins, params: { url: 'https://github.com/apache/cordova-plugin-whitelist.git', pluginName: 'whitelist' } });
+
+    platforms.forEach(function(platform) {
+        tasks.push({ 
+            callback: function() {
+                if(params.emulator[platform]) {
+                    emulate(platform);
+                }
+
+                if(params.device[platform]) {
+                    run(platform);
+                }
+
+            }
+        });
+    });
+
+    tasker();
+
+    function tasker() {
+        if(! tasks.length) {
+            return;
+        }
+
+        var task = tasks.shift();
+        task.callback.apply(task, task.params instanceof Array ? task.params : [ task.params ]);
+    }
+
+    function addPlaform(platform) {
+        // add the platform
+        var cmd = {
+            cmd: 'ionic platform add ' + platform,
+            path: utils.getMobileProjectPath(),
+            onterminated: function(msg) {
+
+                updateStatus('addingPlatform_' + platform, false);
+
+                studio.hideProgressBarOnStatusBar();
+                studio.showMessageOnStatusBar('Ionic platform ' + platform + ' is added.');
+
+                tasker();
+            }
+        };
+
+        studio.hideProgressBarOnStatusBar();
+        studio.showProgressBarOnStatusBar('Ionic adding platform ' + platform + '...');
+        updateStatus('addingPlatform_' + platform, true);
+        utils.executeAsyncCmd(cmd);
+    }
+
     function addPlugins(plugin) {
-        // adding whilelist plugins
         var cmd = {
             cmd: 'ionic plugin add ' + plugin.url,
             path: utils.getMobileProjectPath(),
@@ -473,9 +479,7 @@ function run(message) {
                 studio.hideProgressBarOnStatusBar();
                 studio.showMessageOnStatusBar('Cordova ' + plugin.pluginName + ' is added.');
 
-                if(plugin.onterminated) {
-                    plugin.onterminated.call();
-                }
+                tasker();
             }
         };
 
@@ -502,11 +506,12 @@ function run(message) {
 
 
     function emulate(platform) {
-
-        var platformName = platform === 'android' ? 'Android' : 'iOS';
+        var platformName = platform === 'android' ? 'Android' : 'iOS',
+            platformEmulatorName = platform === 'android' ? 'Android Emulator' : 'iOS Simulator',
+            isInExecution = false;
 
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Emulator...');
+        studio.showProgressBarOnStatusBar('Launching your application on ' + platformEmulatorName + '...');
 
         var storage = utils.getStorage('emulators');
 
@@ -524,30 +529,31 @@ function run(message) {
             path: utils.getMobileProjectPath(),
             onmessage: function(msg) {
                 // save ionic process pid
-                utils.setStorage({
-                    name: 'emulators',
-                    key: platform,
-                    value: {
-                        pid: worker._systemWorker.getInfos().pid
-                    }
-                });
+                utils.setStorage({ name: 'emulators', key: platform, value: {  pid: worker._systemWorker.getInfos().pid } });
 
                 // test if emulator is started
                 var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : /RUN SUCCEEDED/.test(msg);
                 if (started) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar(platformName + ' Emulator started.');
+                    studio.showMessageOnStatusBar(platformEmulatorName + ' started.');
                     updateStatus('emulator_' + platform, false);
                 } else if (!/Ionic server commands, enter:/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' Emulator...');
+                    studio.showProgressBarOnStatusBar('Launching your application on ' + platformEmulatorName + '...');
+                }
+
+                // launch tasker for the first message (command is in execution)
+                if(! isInExecution) {
+                    isInExecution = true;
+                    tasker();
                 }
             },
-            onterminated: function(msg) {},
+            onterminated: function(msg) {
+            },
             onerror: function(msg) {
                 if (!/HAX is working an/.test(msg)) {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Error when running ' + platformName + ' Emulator.');
+                    studio.showMessageOnStatusBar('Error when running ' + platformEmulatorName + '.');
                     updateStatus('emulator_' + platform, false);
                 }
             }
@@ -557,7 +563,8 @@ function run(message) {
     }
 
     function run(platform) {
-        var devices = utils.getConnectedDevices();
+        var devices = utils.getConnectedDevices(),
+            isInExecution = false;
 
         var platformName = platform === 'android' ? 'Android' : 'iOS';
 
@@ -572,13 +579,7 @@ function run(message) {
                 cmd: (platform === 'android' ? 'ionic run -slc -device android --target=' + device.id : 'ionic run -slc --device ios'),
                 path: utils.getMobileProjectPath(),
                 onmessage: function(msg) {
-                    utils.setStorage({
-                        name: 'devices',
-                        key: platform + '_' + device.id,
-                        value: {
-                            pid: worker._systemWorker.getInfos().pid
-                        }
-                    });
+                    utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
 
                     var started = platform === 'android' ? /LAUNCH SUCCESS/.test(msg) : (/RUN SUCCEEDED/.test(msg) || /^success/.test(msg));
                     if (started) {
@@ -594,6 +595,12 @@ function run(message) {
                     } else if(!/No Content-Security-Policy meta tag found/.test(msg) && !/Ionic server commands, enter:/.test(msg)) {
                         studio.hideProgressBarOnStatusBar();
                         studio.showProgressBarOnStatusBar('Launching your application on ' + platformName + ' device.');
+                    }
+
+                    // launch tasker for the first message (command is in execution)
+                    if(! isInExecution) {
+                        isInExecution = true;
+                        tasker();
                     }
                 },
                 onterminated: function(msg) {
@@ -615,6 +622,7 @@ function run(message) {
         var addresses = getAddresses();
 
         if (addresses.length < 2) {
+            tasker();
             return;
         }
 
@@ -647,6 +655,8 @@ function run(message) {
                 blob.copyTo(path, 'OverWrite');
             }
         }
+
+        tasker();
     }
 
     function getAddresses() {
@@ -683,21 +693,9 @@ actions.stopProjectIonicSerices = function() {
         });
     });
 
-    utils.setStorage({
-        name: 'services',
-        value: services,
-        notExtend: true
-    });
-    utils.setStorage({
-        name: 'emulators',
-        value: emulators,
-        notExtend: true
-    });
-    utils.setStorage({
-        name: 'devices',
-        value: devices,
-        notExtend: true
-    });
+    utils.setStorage({ name: 'services', value: services, notExtend: true });
+    utils.setStorage({ name: 'emulators', value: emulators, notExtend: true });
+    utils.setStorage({ name: 'devices', value: devices, notExtend: true });
 };
 
 actions.stopProjectGulpServices = stopProjectGulpServices;
@@ -757,7 +755,8 @@ actions.launchBuild = function(message) {
         buildingError = {
             android: false,
             ios: false
-        };
+        },
+        tasks = [];
 
     function updateStatus(key, value) {
         building[key] = value;
@@ -770,12 +769,19 @@ actions.launchBuild = function(message) {
         if (isBuilding) {
             fireEvent('build');
         } else {
-            fireEvent('buildFinished', {
-                buildingError: buildingError.android || buildingError.ios
-            });
+            fireEvent('buildFinished', { buildingError: buildingError.android || buildingError.ios });
         }
     }
+	
+    function tasker() {
+        if(! tasks.length) {
+            return;
+        }
 
+        var task = tasks.shift();
+        task.callback.apply(task, task.params instanceof Array ? task.params : [ task.params ]);
+    }
+	
     // launch the build after adding the platform
     function build(platform) {
         var platformName = platform === 'android' ? 'Android' : 'iOS';
@@ -815,9 +821,7 @@ actions.launchBuild = function(message) {
                         utils.printConsole({
                             type: 'INFO',
                             category: 'build',
-                            message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({
-                                platform: platform
-                            })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}'
+                            message: '{%a href="#" onClick="studio.sendCommand(\'wakanda-extension-mobile-core.openBuildFolder.' + Base64.encode(JSON.stringify({ platform: platform })) + '\')"%}Open the generated output for ' + platformName + '{%/a%}' 
                         });
                         studio.hideProgressBarOnStatusBar();
                         studio.showMessageOnStatusBar('Your application build is available for ' + platformName + '.');
@@ -835,10 +839,9 @@ actions.launchBuild = function(message) {
         utils.executeAsyncCmd(cmd);
     }
 
-    ['android', 'ios'].forEach(function(platform) {
-        if (!message.params[platform]) {
-            return;
-        }
+
+	
+    function addPlaformAndBuild(platform) {
 
         updateStatus(platform, true);
         var cmd = {
@@ -846,6 +849,7 @@ actions.launchBuild = function(message) {
             path: utils.getMobileProjectPath(),
             onterminated: function(msg) {
                 build(platform);
+                tasker();
             },
             onerror: function(msg) {
                 if (!/Platform (ios|android) already added/.test(msg)) {
@@ -862,7 +866,15 @@ actions.launchBuild = function(message) {
         studio.hideProgressBarOnStatusBar();
         studio.showProgressBarOnStatusBar('Adding platform ' + platform + '.');
         utils.executeAsyncCmd(cmd);
+    };
+	
+    ['android', 'ios'].forEach(function(platform) {
+        if (message.params[platform]) {
+            tasks.push({ callback: addPlaformAndBuild, params: platform });
+        } 
     });
+    
+    tasker();
 };
 
 actions.openBuildFolder = function(message) {
@@ -1087,13 +1099,7 @@ function webPreview(webStudioPreview) {
                     displayed = true;
                     _display(true);
                 }
-                utils.setStorage({
-                    name: 'gulp',
-                    key: projectName,
-                    value: {
-                        pid: worker._systemWorker.getInfos().pid
-                    }
-                });
+                utils.setStorage({ name: 'gulp', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });                    
             },
             onterminated: function(msg) {
             }
@@ -1138,10 +1144,7 @@ function updateIonicConfig(values) {
 }
 
 function fireEvent(eventName, data) {
-    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({
-        eventName: eventName,
-        data: data
-    })));
+    studio.sendCommand('wakanda-extension-mobile-test.listenEvent.' + Base64.encode(JSON.stringify({ eventName: eventName, data: data })));
 }
 
 function checkProject() {
