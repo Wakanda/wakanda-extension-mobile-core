@@ -1043,11 +1043,12 @@ function webPreview(webStudioPreview) {
                 });    
             }
 
-            utils.printConsole({
-                message: '{%span class="orange"%}If necessary, you can add custom paths by going to Preferences > Environment variables.{%/span%}',
-                type: 'INFO'
-            });
-
+            if(! os.isWindows) {
+                utils.printConsole({
+                    message: '{%span class="orange"%}If necessary, you can add custom paths by going to Preferences > Environment variables.{%/span%}',
+                    type: 'INFO'
+                });
+            }
         }
 
         // check if to use gulp is installed and configured for this web project
@@ -1099,7 +1100,17 @@ function webPreview(webStudioPreview) {
                     displayed = true;
                     _display(true);
                 }
-                utils.setStorage({ name: 'gulp', key: projectName, value: {  pid: worker._systemWorker.getInfos().pid } });                    
+                utils.setStorage({
+                    name: 'gulp',
+                    key: projectName,
+                    value: {
+                        pid: worker._systemWorker.getInfos().pid
+                    }
+                });
+
+                if(os.isWindows && msg.indexOf("Starting 'reload'...") !== -1) {
+                  studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframes');
+                }
             },
             onterminated: function(msg) {
             }
