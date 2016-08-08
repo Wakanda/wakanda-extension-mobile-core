@@ -4,7 +4,7 @@ iframe {
 
 }
 
-#webapp-iframe, #ionic-iframe, .android-ios {
+#wrapper-iframe, .full-size {
     width: 100%;
     height: 100%;
 }
@@ -15,21 +15,54 @@ html, body {
     margin: 0;
     padding: 0;
     overflow-y: hidden;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 .btn-wrapper {
     height: 31px;
     background-color: rgb(250, 250, 250);
     border-bottom: solid 1px #cdcdcd;
+    display: table;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-wrapper-cell:first-child {
+    width: 100px;
+}
+
+.btn-wrapper-cell {
+    display: table-cell;
+    vertical-align: top;
+}
+
+.btn-wrapper input[type="text"]:focus {
+    outline: none;
+}
+
+.btn-wrapper input[type="text"] {
+    display: block;
+    float: left;
+    margin: 4px 7px 4px 7px;
+    height: 20px;
+    padding: 1px 5px 3px;
+    line-height: 100%;
+    width: 70%;
+    background: white;
+    border: 0;
+    color: #676A6A;
+    font-size: 11px;
+    border: 1px solid #E2E3E3;
 }
 
 .btn {
-    cursor: pointer;
     display: inline-block;
+    cursor: pointer;
     /*background-size: auto;*/
     background-position: center center;
     background-repeat: no-repeat;
-    margin: 8px;
+    margin: 8px 7px 6px 7px;
 }
 
 .btn-reload {
@@ -37,6 +70,65 @@ html, body {
     background-size: contain;
     width: 14px;
     height: 14px;
+}
+
+.btn-undo {
+    background-image: url(./../icons/undo.png);
+    background-size: contain;
+    width: 16px;
+    height: 16px;
+}
+
+.btn-redo {
+    background-image: url(./../icons/redo.png);
+    background-size: contain;
+    width: 16px;
+    height: 16px;
+    margin: 8px 10px 6px 4px;
+}
+
+.btn-warning {
+    display: none;
+    position: relative;
+    float: left;
+    border: 1px solid red;
+    width: 16px;
+    height: 16px;
+    border-radius: 100%;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-warning span:first-child {
+    font-weight: bold;
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    color: red;
+    font-size: 13px;
+    line-height: 100%;
+    letter-spacing: 0.5px;
+    padding: 2px 0 0 0;
+}
+
+.btn-warning .warning {
+    position: absolute;
+    display: none;
+    top: 20px;
+    right: 0;
+    width: 230px;
+    padding: 8px 10px;
+    background-color: rgb(250, 250, 250);
+    border: solid 1px #cdcdcd;
+}
+
+.btn-warning:hover .warning {
+    display: block;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    line-height: 120%;
+    color: #676A6A;
 }
 
 .absolute-container {

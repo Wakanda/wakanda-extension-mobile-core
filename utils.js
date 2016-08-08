@@ -7,7 +7,7 @@ function getPaths() {
     if(os.isWindows) {
         return paths;
     }
-    
+
     // user preferences paths
     var environmentVariablePath = studio.getPreferences('environmentVariablePath') || '';
     environmentVariablePath.split("\n").forEach(function(path) {
@@ -27,8 +27,6 @@ function getPaths() {
     return paths;
 }
 
-
-
 function getMessageString(options) {
     "use strict";
 
@@ -42,7 +40,7 @@ function getMessageString(options) {
 
 function printConsole(obj) {
     "use strict";
-    
+
     studio.sendCommand(getMessageString(obj));
 }
 
@@ -81,25 +79,37 @@ function stringifyFunc(obj) {
     });
 }
 
-function getAvailablePort() {
+function getAvailablePort(startingPort) {
     "use strict";
 
     var res,
+        port = startingPort || 8100,
         ports = [],
         netstatOutput = shell.exec('netstat -an -p tcp'),
         ipList = studio.getLocalIpAddresses().split(';'),
-        ips = ipList.map(function(ip) { return '(' + ip.replace(/\./, '\\.') + ')'; }).join('|'),
-        regex = new RegExp('(' + ips + ')' + '\\.(\\d+)', 'g');
+        ips = [],
+        regexpString = '';
+
+    if (studio.os.isWindows) {
+        ipList.push('0.0.0.0');
+        ips = ipList.map(function(ip) { return '(' + ip.replace(/\./g, '\\.') + ')'; }).join('|');
+        regexpString = '(' + ips + ')' + '\\:(\\d+)';
+    } else {
+        ips = ipList.map(function(ip) { return '(' + ip.replace(/\./g, '\\.') + ')'; }).join('|');
+        regexpString = '((\\*)|' + ips + ')' + '\\.(\\d+)';
+    }
+
+    var regex = new RegExp(regexpString, 'g');
 
     while(res = regex.exec(netstatOutput)) {
         ports.push(parseFloat(res.pop(), 10));
     }
-    var port = 8100;
+
     while(true) {
         if(ports.indexOf(port) === -1) {
             break;
         }
-        port ++;
+        port++;
     }
     return port;
 }
@@ -122,7 +132,7 @@ function killProcessAndChild(pid) {
         return;
     }
     try {
-        return executeSyncCmd({ cmd: (os.isWindows ? 'taskkill /PID ' : 'pkill -TERM -P ') + pid });
+        return executeSyncCmd({ cmd: (os.isWindows ? 'taskkill /PID ' : 'kill -TERM -') + pid });
     } catch(e) {
         printConsole({ msg: e.message, type: 'ERROR' });
     }
@@ -146,9 +156,9 @@ function executeAsyncCmd(command) {
             type: 'COMMAND'
         });
     }
-    
+
     var worker = shell.create(wrapCommand(command.cmd), command.path);
-    
+
     worker.onmessage = function(msg) {
         if(! consoleSilentMode) {
             printConsole({
@@ -156,12 +166,12 @@ function executeAsyncCmd(command) {
                 type: 'OUTPUT'
             });
         }
-    
+
         if(command.onmessage) {
             command.onmessage(msg);
         }
     };
-    
+
     worker.onerror = function(msg) {
         if(! consoleSilentMode) {
             printConsole({
@@ -174,7 +184,7 @@ function executeAsyncCmd(command) {
             command.onerror(msg);
         }
     };
-    
+
     worker.onterminated = function(msg) {
         if(! consoleSilentMode && ! (typeof(msg) === 'object'  && msg.type === 'terminate')) {
             printConsole({
@@ -183,7 +193,7 @@ function executeAsyncCmd(command) {
             });
         }
         if(command.onterminated) {
-            command.onterminated(msg);    
+            command.onterminated(msg);
         }
     };
 
@@ -217,7 +227,7 @@ function executeSyncCmd(command) {
     return output;
 }
 
-/* 
+/*
  * studio manipulating storage
 */
 function getStorage(name) {
@@ -228,7 +238,7 @@ function getStorage(name) {
 
 function setStorage(params) {
     "use strict";
-    
+
     var storage = JSON.parse(studio.extension.storage.getItem(params.name) || '{}');
     var updated = params.key === undefined ? storage : storage[params.key];
 
@@ -274,7 +284,7 @@ function getConnectedDevices() {
         if(! devices.ios.connected) {
             try {
                 output = executeSyncCmd({ cmd: 'ioreg -w -p IOUSB | grep -w iPad' });
-                devices.ios.connected = /iPad/.test(output);            
+                devices.ios.connected = /iPad/.test(output);
             } catch(e) {
                 studio.log(e.message);
             }
@@ -285,13 +295,13 @@ function getConnectedDevices() {
     // check for the android device
     try {
         output = executeSyncCmd( {cmd: 'adb devices'} );
-     
+
         var regex = /^(\w+)( |\t)+device$/;
 
         output.split(/\n|\n\r/).forEach(function(row) {
             var match = regex.exec(row.trim());
             if(match) {
-                devices.android.push({ id: match[1] });      
+                devices.android.push({ id: match[1] });
             }
         });
 
@@ -304,43 +314,56 @@ function getConnectedDevices() {
 }
 
 function isOnline() {
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://www.msftncsi.com/ncsi.txt", false);
-        xhr.send();
-        return true;
-    } catch(e) {
-        return false;
-    };
+    return isConnected('http://www.msftncsi.com/ncsi.txt');
 }
 
 function checkInstalledNodeModules() {
-    var installed = true,
-        path = getWebProjectPath(),
-        file = File(path + '/package.json');
-
-
+    // get installed modules
     try {
-        if(! file.exists) {
-            return false;
-        }
-
-        var packageJson = JSON.parse(file.toString());
-
-        var dependencies = Object.keys(packageJson.devDependencies || {});
-        dependencies = dependencies.concat(Object.keys(packageJson.dependencies || {}));
-
-        dependencies.forEach(function(module) {
-            if( ! installed) {
-                return;
-            }
-            if(! Folder(path + '/node_modules/' + module).exists) {
-                installed = false;
-            }
+        var output = executeSyncCmd({
+            cmd: 'npm list --depth=0 --json ' + (os.isWindows ? '2>nul' : '2>/dev/null'),
+            path: getWebProjectPath()
         });
-        return installed;
     } catch(e) {
-        studio.log('error : ' + e);
+        return false;
+    }
+
+    var result = JSON.parse(output || '{}');
+
+    // dependencies modules
+    if(result.problems && result.problems.length) {
+        return false;
+    }
+
+    // check using package.json
+    var file = File(getWebProjectPath() + '/package.json');
+    if(! file.exists) {
+        return false;
+    }
+
+    // dev dependencies
+    var packageJson = JSON.parse(file.toString());
+    var dependencies = Object.keys(packageJson.devDependencies || {});
+
+    var modules = [];
+    Object.keys(result.dependencies || {}).forEach(function(module) {
+        if(! result.dependencies[module].missing) {
+            modules.push(module);
+        }
+    });
+
+    return ! dependencies.some(function(module) {
+        return modules.indexOf(module) === -1;
+    });
+}
+
+function isConnected(url) {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, false);
+        xhr.send();
+        return true;
+    } catch(e) {
         return false;
     }
 }
@@ -362,3 +385,4 @@ exports.getMobileProjectPath = getMobileProjectPath;
 exports.getWebProjectPath = getWebProjectPath;
 exports.isOnline = isOnline;
 exports.checkInstalledNodeModules = checkInstalledNodeModules;
+exports.isConnected = isConnected;

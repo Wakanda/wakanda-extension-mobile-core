@@ -1,3 +1,39 @@
+body {
+    background-color: rgb(243,243,243);
+    font-family: "Arial";
+}
+
+.container {
+    width: 410px;
+    margin: auto;
+}
+
+h1 {
+    margin: 100px 0 10px 0;
+    color: rgb(52, 52, 52);
+    font-size: 19px;
+    font-weight: normal;
+}
+.pending {
+    margin:0;
+    color: rgb(111, 117, 130);
+    background-color: rgb(70, 179, 158);
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: bold;
+    text-decoration: none;
+    color: white;
+    padding: 10px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+}
+
+.info {
+    color: gray;
+    font-size: 12px;
+}
+
 .one {
     opacity: 0;
     -webkit-animation: dot 1.3s infinite;
@@ -46,12 +82,3 @@
     }
 }
 
-#pending {
-    -webkit-font-smoothing: antialiased;
-    color: rgb(111, 117, 130);
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    font-weight: 200;
-    letter-spacing: 1px;
-    text-decoration: none;
-}
