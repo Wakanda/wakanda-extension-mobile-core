@@ -153,8 +153,10 @@ function installNpmDependencies(options) {
         options.onSuccess &&  options.onSuccess();
     }
     if(! utils.isOnline()) {
-        utils.printConsole({ message: 'You can not install npm dependencies without internet connection. Please check your internet connection and try again!', type: 'error' });
-        options.onError && options.onError();
+        var msg = 'You cannot install npm dependencies without internet connection. Please check your internet connection and try again!'; 
+        utils.printConsole({ message: msg, type: 'error' });
+        options.onError && options.onError(msg);
+        return;
     }
     var cmd = {
         cmd: 'npm install',
@@ -162,15 +164,15 @@ function installNpmDependencies(options) {
         onterminated: function(msg) {
             watchSolutionForlder(true);            
             if(msg.exitStatus !== 0) {
-                utils.printConsole({ type: 'error', message: 'Installing npm modules exited with errors !' });        
+                utils.printConsole({ type: 'error', message: 'Installation of npm dependencies exited with errors!' });        
             }
             options.onSuccess && options.onSuccess();
             studio.hideProgressBarOnStatusBar();
-            studio.showMessageOnStatusBar('Installing required node modules is finished');
+            studio.showMessageOnStatusBar('Installation of npm dependencies is finished');
         }
     };
     studio.hideProgressBarOnStatusBar();
-    studio.showProgressBarOnStatusBar('Installing required node modules...');
+    studio.showProgressBarOnStatusBar('Installing npm dependencies...');
     watchSolutionForlder(false);
     utils.executeAsyncCmd(cmd);
 }
@@ -256,7 +258,7 @@ actions.ionicPreview = function(message) {
                 onError: function() {
                     fireEvent('mobilePreviewtInstallingModulesFinished');
                     if(! utils.isOnline()) {
-                        studio.alert('To preview your application, you should have internet connect to install required node modules!');
+                        studio.alert('To preview your application, you should have an internet connection to install the required npm dependencies. Please check your internet connection and try again!');
                     }                                              
                 }
             });      
@@ -404,7 +406,7 @@ actions.ionicRun = function(message) {
         }
         
         if(! utils.isOnline()) {
-            var message = 'To run your application, you should have internet connection to install required node modules. Please check your internet connection and try again!';
+            var message = 'To run your application, you should have an internet connection to install the required npm dependencies. Please check your internet connection and try again!';
             studio.alert(message);
             utils.printConsole({ TYPE: 'ERROR', message: message });
             return;
@@ -415,7 +417,7 @@ actions.ionicRun = function(message) {
             onterminated: function(msg) {
                 watchSolutionForlder(true);
                 if(msg.exitStatus !== 0) {
-                    utils.printConsole({ TYPE: 'ERROR', message: 'Installing required node modules exited with errors !' });        
+                    utils.printConsole({ TYPE: 'ERROR', message: 'Installation of npm dependencies exited with errors!' });        
                 }
                 updateStatus('installNodeModules', false);
                 tasker();
@@ -423,7 +425,7 @@ actions.ionicRun = function(message) {
         };
         updateStatus('installNodeModules', true);
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Installing required node modules...');
+        studio.showProgressBarOnStatusBar('Installing npm dependencies...');
         watchSolutionForlder(false);
         utils.executeAsyncCmd(cmd);
     }
@@ -457,7 +459,7 @@ actions.ionicRun = function(message) {
         };
         updateStatus('checkPlatforms', true);
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Check added cordova platforms');
+        studio.showProgressBarOnStatusBar('Check added Cordova platforms');
         utils.executeAsyncCmd(cmd);
     }
     
@@ -488,7 +490,7 @@ actions.ionicRun = function(message) {
         };
 
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Check added cordova plugins');
+        studio.showProgressBarOnStatusBar('Check added Cordova plugins');
         utils.executeAsyncCmd(cmd);
     }
 
@@ -729,7 +731,7 @@ actions.stopProjectIonicServices = function() {
     var emulators = utils.getStorage('emulators');
     var devices = utils.getStorage('devices');
 
-    studio.log('Stopping launched ionic project process');
+    studio.log('Stopping launched Ionic project process');
     // kill all launched ionic process
     [services, emulators, devices].forEach(function(storage) {
         Object.keys(storage).forEach(function(elm) {
@@ -864,7 +866,7 @@ actions.launchBuild = function(message) {
                 });
             },
             onterminated: function(msg) {
-                // check if builded without error
+                // check if built without error
                 if (msg.exitStatus === 0) {
                     if (!buildingError[platform]) {
                         utils.printConsole({
@@ -877,7 +879,7 @@ actions.launchBuild = function(message) {
                     }
                 } else {
                     studio.hideProgressBarOnStatusBar();
-                    studio.showMessageOnStatusBar('Build existed with error. Exit status : ' + msg.exitStatus + '.');
+                    studio.showMessageOnStatusBar('Build exited with errors! Exit status : ' + msg.exitStatus + '.');
                     buildingError[platform] = true;
                 }
 
@@ -923,7 +925,7 @@ actions.launchBuild = function(message) {
         }
         
         if(! utils.isOnline()) {
-            var message = 'To build your application, you should have internet connection to install required node modules. Please check your internet connection and try again!';
+            var message = 'To build your application, you should have an internet connection to install the required npm dependencies. Please check your internet connection and try again!';
             studio.alert(message);
             utils.printConsole({ TYPE: 'ERROR', message: message });
             return;
@@ -934,7 +936,7 @@ actions.launchBuild = function(message) {
             onterminated: function(msg) {
                 watchSolutionForlder(true);
                 if(msg.exitStatus !== 0) {
-                    utils.printConsole({ TYPE: 'ERROR', message: 'Installing required node modules exited with errors !' });        
+                    utils.printConsole({ TYPE: 'ERROR', message: 'Installation of npm dependencies exited with errors!' });        
                 }
                 updateStatus('installNodeModules', false);
                 tasker();
@@ -942,7 +944,7 @@ actions.launchBuild = function(message) {
         };
         updateStatus('installNodeModules', true);
         studio.hideProgressBarOnStatusBar();
-        studio.showProgressBarOnStatusBar('Installing required node modules ...');
+        studio.showProgressBarOnStatusBar('Installing npm dependencies...');
         watchSolutionForlder(false);
         utils.executeAsyncCmd(cmd);
     }
@@ -1117,7 +1119,7 @@ function webPreview(config) {
         var nodeDependency = checkDependency('node'); 
         if(! nodeDependency) {
             utils.printConsole({
-                message: '{%span class="orange"%}Live reloading is currently deactivated. If you want the page to reload automatically after any file changes occur, please install node.{%/span%}',
+                message: '{%span class="orange"%}Live reloading is currently deactivated. If you want the page to reload automatically after any file changes occur, please install Node.{%/span%}',
                 type: 'INFO'
             });
 
@@ -1147,7 +1149,7 @@ function webPreview(config) {
             fireEvent('webInstallingNpmModules');
 
             studio.hideProgressBarOnStatusBar();
-            studio.showProgressBarOnStatusBar('Installing npm modules from package.json ...');
+            studio.showProgressBarOnStatusBar('Installing npm dependencies from package.json...');
 
             var command = {
                 cmd: 'npm install',
@@ -1158,10 +1160,10 @@ function webPreview(config) {
                     studio.hideProgressBarOnStatusBar();
                     if (msg.exitStatus === 0) {
                         _launchServe();
-                        studio.showMessageOnStatusBar('npm modules installed.');
+                        studio.showMessageOnStatusBar('npm dependencies installed.');
                     } else {
                         _display(false);
-                        studio.showMessageOnStatusBar('npm modules installation exited with errors.');
+                        studio.showMessageOnStatusBar('Installation of npm dependencies exited with errors!');
                     }
                 }
             };
