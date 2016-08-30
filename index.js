@@ -151,6 +151,7 @@ function webAppViewPending(config, message) {
 function installNpmDependencies(options) {
     if(utils.checkInstalledNodeModules(options.path)) {
         options.onSuccess &&  options.onSuccess();
+        return;
     }
     if(! utils.isOnline()) {
         var msg = 'You cannot install npm dependencies without internet connection. Please check your internet connection and try again!'; 
@@ -1134,12 +1135,12 @@ function webPreview(config) {
                     type: 'INFO'
                 });
             }
-        };
+        }
 
         if (! nodeDependency || ! packageJson.exists) {
             _display(false);
 
-        } else if(utils.checkInstalledNodeModules()) {
+        } else if(utils.checkInstalledNodeModules(projectPath)) {
             _launchServe();
 
         } else if(! utils.isOnline()) { // no internet connection

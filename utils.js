@@ -317,12 +317,12 @@ function isOnline() {
     return isConnected('http://www.msftncsi.com/ncsi.txt');
 }
 
-function checkInstalledNodeModules() {
+function checkInstalledNodeModules(path) {
     // get installed modules
     try {
         var output = executeSyncCmd({
             cmd: 'npm list --depth=0 --json ' + (os.isWindows ? '2>nul' : '2>/dev/null'),
-            path: getWebProjectPath()
+            path: path
         });
     } catch(e) {
         return false;
