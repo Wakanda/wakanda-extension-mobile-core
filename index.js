@@ -1185,24 +1185,8 @@ function webPreview(config) {
             var command = {
                 cmd: 'npm start -- -- --serverUrl ' + options.serverUrl + ' --port ' + options.port + ' --livereloadPort ' + options.livereloadPort,
                 path: projectPath,
-                onmessage: function(msg) {
-                    var readyMessages = [
-                        "webpack: bundle is now VALID.", /* Webpack */
-                        "Server started", /* Gulp */
-                        "Compilation complete" /* Lite-server */
-                    ];
-
-                    var ready = readyMessages.some(function (message) {
-                        if (msg.indexOf(message) > -1) {
-                            return true;
-                        }
-                    });
-
-                    if (!displayed && ready) {
-                        displayed = true;
-                        _display(true);
-                    }
-
+                onmessage: function(msg) { 
+                    _checkReady(msg);
                     utils.setStorage({
                         name: 'npm-serve',
                         key: projectName,
@@ -1215,10 +1199,32 @@ function webPreview(config) {
                     if(os.isWindows && msg.indexOf("Starting 'reload'...") !== -1) {
                         studio.sendExtensionWebZoneCommand('wakanda-extension-mobile-core', 'reloadIframes');
                     }
+                },
+                onerror: function(msg) {
+                    _checkReady(msg);
                 }
             };
             webAppViewPending(config, 'npm start');
             var worker = utils.executeAsyncCmd(command);
+        }
+
+        function _checkReady(message) {
+            var readyMessages = [
+                "webpack: bundle is now VALID.", /* Webpack */
+                "Checking finished", /* Webpack */
+                "Server started", /* Gulp */
+                "Compilation complete" /* Lite-server */
+            ];
+            var ready = readyMessages.some(function (_message) {
+                if (message.indexOf(_message) > -1) {
+                    return true;
+                }
+            });
+
+            if (!displayed && ready) {
+                displayed = true;
+                _display(true);
+            }
         }
 
         function _display(livereload) {
