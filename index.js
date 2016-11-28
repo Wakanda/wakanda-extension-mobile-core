@@ -629,7 +629,7 @@ actions.ionicRun = function(message) {
             updateStatus('device_' + platform + '_' + device.id, true);
 
             var cmd = {
-                cmd: (platform === 'android' ? 'ionic run -slc -device android --target=' + device.id : 'ionic run -slc --device ios'),
+                cmd: (platform === 'android' ? 'ionic run android -slc --target=' + device.id : 'ionic run ios -slc'),
                 path: utils.getMobileProjectPath(),
                 onmessage: function(msg) {
                     utils.setStorage({ name: 'devices', key: platform + '_' + device.id, value: {  pid: worker._systemWorker.getInfos().pid } });
