@@ -1183,7 +1183,7 @@ function webPreview(config) {
 
             options.port = utils.getAvailablePort(8000);
             var command = {
-                cmd: 'npm start -- -- --serverUrl ' + options.serverUrl + ' --port ' + options.port + ' --livereloadPort ' + options.livereloadPort,
+                cmd: 'npm run start -- -- --serverUrl ' + options.serverUrl + ' --port ' + options.port + ' --livereloadPort ' + options.livereloadPort,
                 path: projectPath,
                 onmessage: function(msg) { 
                     _checkReady(msg);
@@ -1204,7 +1204,7 @@ function webPreview(config) {
                     _checkReady(msg);
                 }
             };
-            webAppViewPending(config, 'npm start');
+            webAppViewPending(config, 'npm run start');
             var worker = utils.executeAsyncCmd(command);
         }
 
